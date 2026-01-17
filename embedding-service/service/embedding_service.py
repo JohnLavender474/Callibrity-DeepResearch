@@ -1,4 +1,5 @@
 import uuid
+import logging
 from typing import List
 
 from sentence_transformers import SentenceTransformer
@@ -7,20 +8,27 @@ from qdrant_client.models import PointStruct
 from model.document_insertion import TextInsertion
 
 
+logger = logging.getLogger(__name__)
+
+
 class EmbeddingService:
 
     def __init__(self, model_name: str):
+        logger.info(f"Initializing EmbeddingService with model: {model_name}")
         self.model_name = model_name
         self.model = SentenceTransformer(model_name)
         self.dim = self.model.get_sentence_embedding_dimension()
+        logger.info(f"EmbeddingService initialized, embedding dimension: {self.dim}")
 
 
-    def get_encoding(self, text: str) -> List[float]:        
+    def get_encoding(self, text: str) -> List[float]:
+        logger.debug(f"Encoding text of length {len(text)}")
         embedding = self.model.encode(text, convert_to_numpy=True)
         return embedding.tolist()
 
 
-    def get_encoding_for_batch(self, texts: List[str]) -> List[List[float]]:        
+    def get_encoding_for_batch(self, texts: List[str]) -> List[List[float]]:
+        logger.debug(f"Encoding batch of {len(texts)} texts")
         embeddings = self.model.encode(texts, convert_to_numpy=True)
         return embeddings.tolist()
 
