@@ -1,8 +1,8 @@
 import uuid
 
-from typing import List, Dict
-from unstructured.partition.auto import partition
+from typing import List
 
+from pypdf import PdfReader
 from qdrant_client.models import PointStruct
 
 from service.embedding_service import EmbeddingService
@@ -16,12 +16,34 @@ class DocumentProcessor:
 
 
     def extract_text(self, file_path: str) -> str:
-        elements = partition(filename=file_path)
-        text = "\n\n".join([str(el) for el in elements])
+        if file_path.endswith('.pdf'):
+            return self._extract_pdf(file_path)
+        elif file_path.endswith('.txt'):
+            return self._extract_text_file(file_path)
+        else:
+            raise ValueError(
+                f"Unsupported file format. Supported: .pdf, .txt"
+            )
+
+
+    def _extract_pdf(self, file_path: str) -> str:
+        reader = PdfReader(file_path)
+        text = ""
+        for page in reader.pages:
+            text += page.extract_text() + "\n"
         return text
 
 
-    def chunk_text(self, text: str, chunk_size: int) -> List[str]:
+    def _extract_text_file(self, file_path: str) -> str:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            return f.read()
+
+
+    def chunk_text(
+        self,
+        text: str,
+        chunk_size: int
+    ) -> List[str]:
         words = text.split()
         chunks = []
         current_chunk = []
@@ -29,7 +51,8 @@ class DocumentProcessor:
         
         for word in words:
             word_size = len(word) + 1
-            if current_size + word_size > chunk_size and current_chunk:
+            if (current_size + word_size > chunk_size
+                and current_chunk):
                 chunks.append(" ".join(current_chunk))
                 current_chunk = [word]
                 current_size = word_size
@@ -46,8 +69,7 @@ class DocumentProcessor:
     def process_document(
         self,
         file_path: str,
-        filename: str,
-        metadata: Dict[str, str],
+        filename: str,        
         chunk_size: int = 2000
     ) -> List[PointStruct]:
         text = self.extract_text(file_path)

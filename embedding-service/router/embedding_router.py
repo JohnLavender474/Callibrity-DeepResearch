@@ -1,8 +1,5 @@
 import tempfile
 import os
-import json
-
-from typing import List
 
 from fastapi import (
     APIRouter,
@@ -20,6 +17,15 @@ from service.document_processor import DocumentProcessor
 
 
 router = APIRouter(prefix="/api/embedding", tags=["embedding"])
+
+
+@router.get("/collections/{collection_name}")
+async def collection_exists(collection_name: str, request: Request):
+    vector_client: QdrantVectorClient = (
+        request.app.state.vector_client
+    )    
+    exists = vector_client.collection_exists(collection_name)
+    return {"exists": exists}
 
 
 @router.post("/collections/{collection_name}")
@@ -49,10 +55,9 @@ async def create_collection(collection_name: str, request: Request):
 
 @router.post("/collections/{collection_name}/upload")
 async def upload_document(
-    collection_name: str,
-    file: UploadFile = File(...),
-    metadata: str = Form("{}"),
-    request: Request = None
+    request: Request,
+    collection_name: str,    
+    file: UploadFile = File(...),    
 ):    
     vector_client: QdrantVectorClient = (
         request.app.state.vector_client
@@ -67,8 +72,6 @@ async def upload_document(
             detail=f"Collection '{collection_name}' does not exist"
         )
     
-    metadata_dict = json.loads(metadata)
-    
     with tempfile.NamedTemporaryFile(
         delete=False,
         suffix=os.path.splitext(file.filename)[1]
@@ -80,8 +83,7 @@ async def upload_document(
     try:
         points = document_processor.process_document(
             file_path=tmp_path,
-            filename=file.filename,
-            metadata=metadata_dict
+            filename=file.filename,            
         )
         
         batch_size = 64
