@@ -13,7 +13,7 @@ from fastapi import (
 from model.search_query import SearchQuery
 from client.qdrant_client import QdrantVectorClient
 from service.embedding_service import EmbeddingService
-from service.document_processor import DocumentProcessor
+from processor.document_processor import DocumentProcessor
 
 
 router = APIRouter(prefix="/api/embedding", tags=["embedding"])

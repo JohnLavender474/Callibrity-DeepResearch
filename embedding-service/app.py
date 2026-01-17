@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
 from service.embedding_service import EmbeddingService
-from service.document_processor import DocumentProcessor
+from processor.document_processor import DocumentProcessor
 from client.qdrant_client import QdrantVectorClient
 from router import embedding_router
 from config.vars import QDRANT_URL, SENTENCE_TRANSFORMER_MODEL
