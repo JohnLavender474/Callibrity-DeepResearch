@@ -7,7 +7,7 @@ A FastAPI service for document embedding and semantic search using Sentence Tran
 Start both Qdrant and the embedding service:
 
 ```bash
-docker compose up --build
+./run.sh
 ```
 
 The services will be available at:
