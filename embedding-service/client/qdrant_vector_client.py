@@ -6,7 +6,11 @@ from qdrant_client import QdrantClient
 from qdrant_client.models import (
     PointStruct,
     Distance,
-    VectorParams
+    VectorParams,
+    Filter, 
+    FieldCondition, 
+    MatchValue,
+    UpdateResult
 )
 
 
@@ -106,7 +110,10 @@ class QdrantVectorClient:
         query_vector: List[float],
         top_k: int
     ) -> List[Dict[str, Any]]:
-        logger.debug(f"Searching collection '{collection_name}' with top_k={top_k}")
+        logger.debug(
+            f"Searching collection '{collection_name}' " + 
+            f"with top_k={top_k}"
+        )
         client: QdrantClient = self.client
         try:
             hits = client.search(
@@ -121,7 +128,10 @@ class QdrantVectorClient:
                     "metadata": h.payload
                 } for h in hits
             ]
-            logger.debug(f"Search returned {len(results)} results from collection '{collection_name}'")
+            logger.debug(
+                f"Search returned {len(results)} results " + 
+                f"from collection '{collection_name}'"
+            )
             return results
         except Exception as e:
             logger.error(f"Search failed on collection '{collection_name}': {e}")
@@ -149,7 +159,7 @@ class QdrantVectorClient:
                 {
                     "id": point.id,
                     "payload": point.payload
-                } 
+                }
                 for point in points[0]
             ]
             logger.debug(
@@ -161,5 +171,103 @@ class QdrantVectorClient:
             logger.error(
                 f"Failed to fetch points from collection "
                 f"'{collection_name}': {e}"
+            )
+            raise
+
+
+    def count_points_by_source(
+        self,
+        collection_name: str,
+        source_name: str
+    ) -> int:
+        logger.debug(
+            f"Counting points in '{collection_name}' "
+            f"with source_name='{source_name}'"
+        )
+        try:          
+            count_result = self.client.count(
+                collection_name=collection_name,
+                count_filter=Filter(
+                    must=[
+                        FieldCondition(
+                            key="source_name",
+                            match=MatchValue(value=source_name)
+                        )
+                    ]
+                )
+            )
+            logger.debug(
+                f"Found {count_result.count} points with "
+                f"source_name='{source_name}'"
+            )
+            return count_result.count
+        except Exception as e:
+            logger.error(f"Failed to count points by source: {e}")
+            raise
+
+    
+    def delete_points_by_source(
+        self,
+        collection_name: str,
+        source_name: str
+    ) -> int:
+        logger.info(
+            f"Deleting points from '{collection_name}' "
+            f"with source_name='{source_name}'"
+        )
+        try:            
+            delete_result = self.client.delete(
+                collection_name=collection_name,
+                points_selector=Filter(
+                    must=[
+                        FieldCondition(
+                            key="source_name",
+                            match=MatchValue(value=source_name)
+                        )
+                    ]
+                )
+            )
+            logger.info(
+                f"Deleted {delete_result.deleted_count} points " + 
+                f"from '{collection_name}' " +
+                f"with source_name='{source_name}'"
+            )
+            return delete_result.deleted_count
+        except Exception as e:
+            logger.error(f"Failed to delete points by source: {e}")
+            raise
+
+
+    def update_custom_metadata_by_source(
+        self,
+        collection_name: str,
+        source_name: str,
+        custom_metadata: Dict[str, Any]
+    ) -> UpdateResult:
+        logger.info(
+            f"Updating custom_metadata for points in '{collection_name}' "
+            f"with source_name='{source_name}'"
+        )
+        try:
+            update_result = self.client.set_payload(
+                collection_name=collection_name,
+                payload={"custom_metadata": custom_metadata},
+                points=Filter(
+                    must=[
+                        FieldCondition(
+                            key="source_name",
+                            match=MatchValue(value=source_name)
+                        )
+                    ]
+                )
+            )
+            logger.info(
+                f"Updated custom_metadata in '{collection_name}' " + 
+                f"with source_name='{source_name}'"
+            )
+            return update_result
+        except Exception as e:
+            logger.error(
+                f"Failed to update custom_metadata by source: {e}"
             )
             raise

@@ -228,6 +228,109 @@ async def upload_document(
         os.unlink(tmp_path)
 
 
+@router.put("/collections/{collection_name}/upload")
+async def replace_document(
+    request: Request,
+    collection_name: str,
+    file: UploadFile = File(...),
+    custom_metadata: dict[str, Any] = Form({})
+):
+    logger.info(f"Replace document request for collection '{collection_name}', file: {file.filename}")
+    vector_client: QdrantVectorClient = (
+        request.app.state.vector_client
+    )
+    document_processor: DocumentProcessor = (
+        request.app.state.document_processor
+    )
+
+    try:
+        if not vector_client.collection_exists(collection_name):
+            logger.error(f"Collection '{collection_name}' does not exist")
+            raise HTTPException(
+                status_code=404,
+                detail=f"Collection '{collection_name}' does not exist"
+            )
+
+        logger.debug(f"Checking if document '{file.filename}' exists")
+        existing_count = vector_client.count_points_by_source(
+            collection_name,
+            file.filename
+        )
+
+        if existing_count == 0:
+            logger.warning(
+                f"No existing chunks found for '{file.filename}' "
+                f"in collection '{collection_name}'"
+            )
+            raise HTTPException(
+                status_code=404,
+                detail=(
+                    f"No existing chunks found for '{file.filename}'. "
+                    f"Use POST to upload a new document."
+                )
+            )
+
+        logger.info(
+            f"Found {existing_count} existing chunks for '{file.filename}', "
+            f"deleting them"
+        )
+        deleted_count = vector_client.delete_points_by_source(
+            collection_name,
+            file.filename
+        )
+        logger.info(f"Deleted {deleted_count} chunks")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to check existing document: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to check existing document: {e}"
+        )
+
+    with tempfile.NamedTemporaryFile(
+        delete=False,
+        suffix=os.path.splitext(file.filename)[1]
+    ) as tmp_file:
+        content = await file.read()
+        tmp_file.write(content)
+        tmp_path = tmp_file.name
+
+    try:
+        logger.debug(f"Processing document: {file.filename}")
+        points = document_processor.process_document(
+            file_path=tmp_path,
+            filename=file.filename,
+            custom_metadata=custom_metadata
+        )
+        logger.info(f"Document processed into {len(points)} chunks")
+
+        batch_size = 64
+        for i in range(0, len(points), batch_size):
+            logger.debug(f"Upserting batch {i // batch_size + 1}")
+            vector_client.upsert(
+                collection_name,
+                points[i : i + batch_size]
+            )
+
+        logger.info(
+            f"Document '{file.filename}' replaced in "
+            f"collection '{collection_name}'"
+        )
+        return {
+            "status": "ok",
+            "filename": file.filename,
+            "chunks_replaced": existing_count,
+            "chunks_indexed": len(points)
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to replace document '{file.filename}': {e}")
+        raise
+    finally:
+        os.unlink(tmp_path)
+
+
 @router.post("/collections/{collection_name}/search")
 async def search(
     collection_name: str,
@@ -268,4 +371,80 @@ async def search(
         raise HTTPException(
             status_code=500,
             detail=f"Search failed: {e}"
+        )
+
+
+@router.patch("/collections/{collection_name}/documents/{source_name}/metadata")
+async def update_document_metadata(
+    collection_name: str,
+    source_name: str,
+    custom_metadata: dict[str, Any],
+    request: Request
+):
+    logger.info(
+        f"Update metadata request for collection '{collection_name}', "
+        f"source_name: {source_name}"
+    )
+    vector_client: QdrantVectorClient = (
+        request.app.state.vector_client
+    )
+
+    try:
+        if not vector_client.collection_exists(collection_name):
+            logger.error(f"Collection '{collection_name}' does not exist")
+            raise HTTPException(
+                status_code=404,
+                detail=f"Collection '{collection_name}' does not exist"
+            )
+
+        logger.debug(
+            f"Checking if document '{source_name}' exists "
+            f"in collection '{collection_name}'"
+        )
+        existing_count = vector_client.count_points_by_source(
+            collection_name,
+            source_name
+        )
+
+        if existing_count == 0:
+            logger.warning(
+                f"No chunks found for source_name='{source_name}' "
+                f"in collection '{collection_name}'"
+            )
+            raise HTTPException(
+                status_code=404,
+                detail=(
+                    f"No chunks found for source_name='{source_name}' "
+                    f"in collection '{collection_name}'"
+                )
+            )
+
+        logger.info(
+            f"Updating custom_metadata for {existing_count} chunks"
+        )
+        update_result = vector_client.update_custom_metadata_by_source(
+            collection_name,
+            source_name,
+            custom_metadata
+        )
+
+        logger.info(
+            f"Successfully updated metadata for '{source_name}' "
+            f"in collection '{collection_name}'"
+        )
+        return {
+            "status": "ok",
+            "source_name": source_name,
+            "update_result": update_result,
+            "custom_metadata": custom_metadata
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            f"Failed to update metadata for '{source_name}': {e}"
+        )
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to update metadata: {e}"
         )
