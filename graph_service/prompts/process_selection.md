@@ -27,7 +27,27 @@ selecting the most appropriate processing strategy.
    feedback at key junctures, where the user can guide
    the reasoning direction or provide clarifications.
    Each step builds on the previous one, and the final
-   answer is synthesized from this guided process.   
+   answer is synthesized from this guided process.
+
+## Conversation Context
+
+Analyze the message history carefully. The
+conversation context may indicate a preference for
+a particular process:
+
+- If the conversation shows a pattern of **guided,
+  iterative reasoning** where each response builds on
+  prior steps or the assistant has been explicitly
+  guiding the user through a process, skew toward
+  **sequential_synthesis**.
+
+- If the conversation shows a pattern of **independent
+  topic exploration** or **parallel analysis** of
+  distinct aspects, skew toward **parallel_synthesis**.
+
+- If this is the first message or the conversation
+  is disconnected from the current query, treat the
+  query independently based on its structure alone.
 
 ## Output Requirements
 
@@ -35,9 +55,11 @@ Provide your selection along with a clear explanation
 of your reasoning. The `reasoning` field should
 contain your interpretation of why the selected
 process is the most appropriate for the given query.
+
 Consider factors such as query complexity, the need
-for decomposition, and whether user guidance would
-be beneficial.
+for decomposition, whether user guidance would be
+beneficial, and how the conversation history may
+skew the selection.
 
 Respond with the selected process type and your
 reasoning.

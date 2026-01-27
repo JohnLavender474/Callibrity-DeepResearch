@@ -14,12 +14,18 @@ async def select_process(
 ) -> ProcessSelectionOutput:
     system_prompt = load_prompt("process_selection.md")
 
+    messages = (
+        input_data.messages.copy() 
+        if input_data.messages else []
+    )
+    messages.extend([
+        SystemMessage(content=system_prompt),
+        HumanMessage(content=input_data.user_query),
+    ])
+
     output = await claude_client.ainvoke(
-        [
-            SystemMessage(content=system_prompt),
-            HumanMessage(content=input_data.user_query),
-        ],        
-        output_type=ProcessSelectionOutput,
+        messages,        
+        output_type=ProcessSelectionOutput,       
     )
 
     return output
