@@ -13,9 +13,9 @@ async def select_process(
     input_data: ProcessSelectionInput,
 ) -> ProcessSelectionOutput:
     system_prompt = load_prompt("process_selection.md")
-
+    
     messages = (
-        input_data.messages.copy() 
+        input_data.messages
         if input_data.messages else []
     )
     messages.extend([
