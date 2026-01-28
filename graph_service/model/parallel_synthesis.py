@@ -3,7 +3,7 @@ from typing import Optional
 from pydantic import BaseModel
 from langchain_core.messages import BaseMessage
 
-from graph_service.model.task_entry import TaskEntry
+from graph_service.model.task import TaskEntry
 
 
 class ParallelSynthesisInput(BaseModel):
