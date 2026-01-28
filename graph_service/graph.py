@@ -39,6 +39,7 @@ async def node_process_selection(state: GraphState) -> GraphState:
         GraphStep(
             type="process_selection",
             details={
+                "input": input_data.model_dump(),
                 "output": output.model_dump(),
             },
         )
@@ -59,6 +60,7 @@ async def node_simple_process(state: GraphState) -> GraphState:
         GraphStep(
             type="simple_process",
             details={
+                "input": input_data.model_dump(),
                 "output": output.model_dump(),
             },
         )
@@ -82,6 +84,7 @@ async def node_parallel_synthesis(
         GraphStep(
             type="parallel_synthesis",
             details={
+                "input": input_data.model_dump(),                
                 "output": output.model_dump(),                
             },
         )

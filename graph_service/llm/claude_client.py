@@ -22,8 +22,7 @@ class ClaudeClientWrapper:
     @overload
     async def ainvoke(
         self,
-        input: list[BaseMessage],
-        system: Optional[str] = None,
+        input: list[BaseMessage],        
         output_type: None = None,
     ) -> Any:
         ...
@@ -32,7 +31,6 @@ class ClaudeClientWrapper:
     async def ainvoke(
         self,
         input: list[BaseMessage],
-        system: Optional[str] = None,
         output_type: Type[T] = ...,
     ) -> T:
         ...
