@@ -39,8 +39,7 @@ async def node_process_selection(state: GraphState) -> GraphState:
         GraphStep(
             type="process_selection",
             details={
-                "process_type": output.process_type,
-                "reasoning": output.reasoning,
+                "output": output.model_dump(),
             },
         )
     )
@@ -60,7 +59,7 @@ async def node_simple_process(state: GraphState) -> GraphState:
         GraphStep(
             type="simple_process",
             details={
-                "result": output.result,
+                "output": output.model_dump(),
             },
         )
     )
@@ -78,12 +77,12 @@ async def node_parallel_synthesis(
     )
     output = await execute_parallel_synthesis(input_data)
 
-    state.current_result = output.result
+    state.current_result = output.overall_result
     state.steps.append(
         GraphStep(
             type="parallel_synthesis",
             details={
-                "result": output.result,
+                "output": output.model_dump(),                
             },
         )
     )

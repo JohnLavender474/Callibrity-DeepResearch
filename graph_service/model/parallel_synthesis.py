@@ -3,6 +3,8 @@ from typing import Optional
 from pydantic import BaseModel
 from langchain_core.messages import BaseMessage
 
+from graph_service.model.task_entry import TaskEntry
+
 
 class ParallelSynthesisInput(BaseModel):
     query: str
@@ -11,4 +13,5 @@ class ParallelSynthesisInput(BaseModel):
 
 
 class ParallelSynthesisOutput(BaseModel):
-    result: str
+    overall_result: str
+    task_entries: list[TaskEntry]

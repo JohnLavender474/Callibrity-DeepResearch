@@ -9,4 +9,4 @@ async def execute_parallel_synthesis(
 ) -> ParallelSynthesisOutput:
     result = ""
 
-    return ParallelSynthesisOutput(result=result)
+    return ParallelSynthesisOutput(overall_result=result)
