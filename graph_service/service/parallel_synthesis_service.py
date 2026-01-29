@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import httpx
 
 from langchain_core.messages import (
@@ -23,9 +24,13 @@ from model.semantic_search_query import (
 from utils.prompt_loader import load_prompt
 
 
+logger = logging.getLogger(__name__)
+
+
 async def execute_parallel_synthesis(
     input_data: ParallelSynthesisInput,
 ) -> ParallelSynthesisOutput:
+    logger.debug(f"Starting parallel synthesis for query: {input_data.query}")
     decomposition_prompt = load_prompt(
         "parallel_synthesis_decomposition.md",
     )
@@ -47,6 +52,7 @@ async def execute_parallel_synthesis(
         ]),
         output_type=TaskDecomposition,
     )
+    logger.debug(f"Task decomposition complete. Number of tasks: {len(decomposition.tasks)}")
 
     task_execution_prompt = load_prompt(
         "task_execution.md",
@@ -64,6 +70,7 @@ async def execute_parallel_synthesis(
     task_entries = await asyncio.gather(
         *task_coroutines,
     )
+    logger.debug(f"All tasks executed. Successful: {sum(1 for e in task_entries if e.success)}, Failed: {sum(1 for e in task_entries if not e.success)}")
 
     summary_prompt = load_prompt(
         "parallel_synthesis_summary.md",
@@ -83,6 +90,7 @@ async def execute_parallel_synthesis(
     )
 
     result = summary_response.result
+    logger.debug("Parallel synthesis completed successfully")
 
     return ParallelSynthesisOutput(
         overall_result=result,
@@ -93,6 +101,7 @@ async def execute_parallel_synthesis(
 async def _generate_search_query(
     task: str,
 ) -> str:
+    logger.debug(f"Generating search query for task: {task}")
     search_query_prompt = load_prompt(
         "semantic_search_query.md",
     )
@@ -111,6 +120,7 @@ async def _generate_search_query(
             output_type=SemanticSearchQuery,
         )
     )
+    logger.debug(f"Generated search query: {search_query_response.query}")
 
     return search_query_response.query
 
@@ -119,27 +129,39 @@ async def _search_documents(
     collection_name: str,
     search_query: str,
 ) -> list[dict]:
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            (
-                f"http://localhost:8001/api/embedding/"
-                f"collections/{collection_name}/search"
-            ),
-            json={
-                "query": search_query,
-                "top_k": 5,
-            },
-        )
-        response.raise_for_status()
-        data = response.json()
-        return data.get("results", [])
+    logger.debug(f"Searching documents in collection '{collection_name}' with query: {search_query}")
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                (
+                    f"http://localhost:8000/api/embedding/"
+                    f"collections/{collection_name}/search"
+                ),
+                json={
+                    "query": search_query,
+                    "top_k": 5,
+                },
+            )
+            response.raise_for_status()
+            data = response.json()
+            results = data.get("results", [])
+            logger.debug(f"Found {len(results)} documents")
+            return results
+    except httpx.HTTPError as e:
+        logger.error(f"HTTP error during document search: {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Error searching documents: {e}")
+        raise
 
 
 def _format_document_context(
     search_query: str,
     documents: list[dict],
 ) -> str:
+    logger.debug(f"Formatting context for {len(documents)} documents")
     if not documents:
+        logger.debug(f"No documents found for search query: {search_query}")
         return (
             f"No documents found for search query: "
             f"{search_query}"
@@ -164,6 +186,7 @@ async def _execute_task(
     prompt: str,    
     collection_name: str,
 ) -> TaskEntry:
+    logger.debug(f"Executing task: {task}")
     try:
         search_query = await _generate_search_query(task)
 
@@ -193,6 +216,7 @@ async def _execute_task(
             output_type=TaskResult,
         )
 
+        logger.debug(f"Task '{task}' completed successfully")
         return TaskEntry(
             task=task,
             success=True,
@@ -200,6 +224,7 @@ async def _execute_task(
             reasoning=result.reasoning,
         )
     except Exception as e:
+        logger.error(f"Task '{task}' failed with error: {e}", exc_info=True)
         return TaskEntry(
             task=task,
             success=False,

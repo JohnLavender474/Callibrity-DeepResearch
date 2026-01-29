@@ -13,6 +13,12 @@ logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
+logging.getLogger('httpcore.http11').setLevel(logging.WARNING)
+logging.getLogger('httpcore.connection').setLevel(logging.WARNING)
+logging.getLogger('httpx').setLevel(logging.WARNING)
+logging.getLogger('anthropic').setLevel(logging.WARNING)
+logging.getLogger('anthropic._base_client').setLevel(logging.WARNING)
+
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Deep Research Embedding Service")
