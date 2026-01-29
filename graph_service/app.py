@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from router.process_selection_router import process_selection_router
 from router.simple_process_router import simple_process_router
 from router.perform_research_router import router as perform_research_router
+from router.graph_router import router as graph_router
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -23,6 +24,7 @@ app = FastAPI(title="Deep Research Graph Service")
 app.include_router(process_selection_router)
 app.include_router(simple_process_router)
 app.include_router(perform_research_router)
+app.include_router(graph_router)
 
 logger.info("Starting Deep Research Graph Service initialization")
 logger.info("Graph service initialized successfully")
