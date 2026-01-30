@@ -18,6 +18,12 @@ from model.simple_process import (
 from model.perform_research import (
     PerformResearchInput,
 )
+from model.perform_review import (
+    PerformReviewInput,
+)
+from model.generate_summary import (
+    GenerateSummaryInput,
+)
 from service.process_selection_service import (
     select_process,
 )
@@ -27,6 +33,12 @@ from service.simple_process_service import (
 from service.perform_research_service import (
     execute_tasks_in_parallel,
     execute_tasks_in_sequence,
+)
+from service.perform_review_service import (
+    execute_perform_review,
+)
+from service.generate_summary_service import (
+    execute_generate_summary,
 )
 
 
@@ -93,7 +105,7 @@ async def node_parallel_tasks(
     output = await execute_tasks_in_parallel(input_data)
     logger.debug(f"Parallel tasks output: {output.model_dump()}")
 
-    state.current_result = output.overall_result
+    state.task_entries = output.task_entries
     state.steps.append(
         GraphStep(
             type="parallel_tasks",
@@ -119,10 +131,61 @@ async def node_sequential_tasks(
     output = await execute_tasks_in_sequence(input_data)
     logger.debug(f"Sequential tasks output: {output.model_dump()}")
 
-    state.current_result = output.overall_result
+    state.task_entries = output.task_entries
     state.steps.append(
         GraphStep(
             type="sequential_tasks",
+            details={
+                "input": input_data.model_dump(),
+                "output": output.model_dump(),
+            },
+        )
+    )
+
+    return state
+
+
+async def node_perform_review(
+    state: GraphState,
+) -> GraphState:
+    logger.debug("Starting perform review node")
+    input_data = PerformReviewInput(
+        task_entries=state.task_entries,
+    )
+    
+    output = await execute_perform_review(input_data)
+    logger.debug(f"Review output: {output.model_dump()}")
+
+    state.review = output.review
+    state.steps.append(
+        GraphStep(
+            type="perform_review",
+            details={
+                "input": input_data.model_dump(),
+                "output": output.model_dump(),
+            },
+        )
+    )
+
+    return state
+
+
+async def node_generate_summary(
+    state: GraphState,
+) -> GraphState:
+    logger.debug("Starting generate summary node")
+    input_data = GenerateSummaryInput(
+        task_entries=state.task_entries,
+        review=state.review,
+    )
+    
+    output = await execute_generate_summary(input_data)
+    logger.debug(f"Summary output: {output.model_dump()}")
+
+    state.current_result = output.summary
+    state.steps.append(
+        GraphStep(
+            type="generate_summary",
             details={
                 "input": input_data.model_dump(),
                 "output": output.model_dump(),
@@ -155,11 +218,15 @@ def build_graph() -> CompiledStateGraph:
     graph.add_node("simple_process", node_simple_process)
     graph.add_node("parallel_tasks", node_parallel_tasks)
     graph.add_node("sequential_tasks", node_sequential_tasks)
+    graph.add_node("perform_review", node_perform_review)
+    graph.add_node("generate_summary", node_generate_summary)
 
     graph.add_edge(START, "process_selection")
     graph.add_edge("simple_process", END)
-    graph.add_edge("parallel_tasks", END)
-    graph.add_edge("sequential_tasks", END)
+    graph.add_edge("parallel_tasks", "perform_review")
+    graph.add_edge("sequential_tasks", "perform_review")
+    graph.add_edge("perform_review", "generate_summary")
+    graph.add_edge("generate_summary", END)
 
     graph.add_conditional_edges(
         "process_selection",

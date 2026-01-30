@@ -72,31 +72,6 @@ async def _decompose_tasks(
     return decomposition
 
 
-async def _summarize_task_entries(
-    task_entries: list[TaskEntry],
-) -> str:
-    logger.debug("Summarizing task entries")
-    summary_prompt = load_prompt(
-        "perform_research_summary.md",
-    )
-
-    summary_response = await claude_client.ainvoke(
-        input=([
-            SystemMessage(content=summary_prompt),
-            HumanMessage(
-                content=json.dumps(
-                    [entry.model_dump() for entry in task_entries],
-                    indent=2,
-                ),
-            ),
-        ]),
-        output_type=TaskResult,
-    )
-
-    logger.debug("Task summarization completed")
-    return summary_response.result
-
-
 async def execute_tasks_in_parallel(
     input_data: PerformResearchInput,
 ) -> PerformResearchOutput:
@@ -132,12 +107,7 @@ async def execute_tasks_in_parallel(
         f"Failed: {sum(1 for e in task_entries if not e.success)}"
     )
 
-    overall_result = await _summarize_task_entries(
-        task_entries
-    )
-
     return PerformResearchOutput(
-        overall_result=overall_result,
         task_entries=task_entries,
     )
 
@@ -159,7 +129,7 @@ async def execute_tasks_in_sequence(
         "task_execution.md",
     )
 
-    task_entries = []
+    task_entries: list[TaskEntry] = []
     chat_history: list[BaseMessage] = []
 
     for task in decomposition.tasks:
@@ -189,10 +159,7 @@ async def execute_tasks_in_sequence(
         f"Failed: {sum(1 for e in task_entries if not e.success)}"
     )
 
-    overall_result = await _summarize_task_entries(task_entries)
-
     return PerformResearchOutput(
-        overall_result=overall_result,
         task_entries=task_entries,
     )
 

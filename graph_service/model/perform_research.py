@@ -1,7 +1,4 @@
-from typing import Optional
-
 from pydantic import BaseModel
-from langchain_core.messages import BaseMessage
 
 from model.task import TaskEntry
 
@@ -12,5 +9,4 @@ class PerformResearchInput(BaseModel):
 
 
 class PerformResearchOutput(BaseModel):
-    overall_result: str
     task_entries: list[TaskEntry]
