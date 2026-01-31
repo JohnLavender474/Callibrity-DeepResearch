@@ -12,6 +12,7 @@ class TaskCitation(BaseModel):
     filename: str    
     chunk_index: int
     collection_name: str
+    score: float
 
 
 class TaskResult(BaseModel):

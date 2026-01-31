@@ -266,6 +266,7 @@ def _extract_citations(
         filename = doc.metadata.source_name
         chunk_index = doc.metadata.chunk_index
         content = doc.metadata.content
+        score = doc.score
 
         citation_key = (collection_name, filename, chunk_index)
 
@@ -276,6 +277,7 @@ def _extract_citations(
                     filename=filename,
                     chunk_index=chunk_index,
                     collection_name=collection_name,
+                    score=score,
                 )
             )
             seen.add(citation_key)
