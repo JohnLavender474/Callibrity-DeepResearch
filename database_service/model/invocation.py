@@ -1,7 +1,8 @@
+import json
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 
 class InvocationCreate(BaseModel):
@@ -28,3 +29,16 @@ class InvocationResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+    @field_validator("graph_state", mode="before")
+    @classmethod
+    def parse_graph_state(cls, value: str | dict | None) -> (
+        dict | None
+    ):
+        if value is None:
+            return None
+        if isinstance(value, dict):
+            return value
+        if isinstance(value, str):
+            return json.loads(value)
+        return value
