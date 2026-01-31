@@ -31,3 +31,9 @@ until docker exec ${CONTAINER_NAME} pg_isready -U ${POSTGRES_USER} > /dev/null 2
 done
 
 echo "PostgreSQL started on port ${POSTGRES_PORT}."
+
+echo "Starting database service on port 8003..."
+
+cd "$(dirname "$0")"
+
+python -m uvicorn app:app --host 0.0.0.0 --port 8003 --reload
