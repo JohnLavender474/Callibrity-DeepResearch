@@ -17,7 +17,7 @@ from model.graph_input import GraphInput
 from model.graph_state import GraphState
 from utils.stop_signal_waiter import StopSignalWaiter
 from exception.invocation_stopped_exception import DeepResearchInvocationStoppedException
-from client import database_client
+from service import invocations_service
 
 import logging
 
@@ -81,7 +81,7 @@ async def stream_graph(
         # Create invocation record in database
 
         try:
-            created_invocation = await database_client.create_invocation(
+            created_invocation = await invocations_service.create_invocation(
                 profile_id=input_data.profile_id,
                 invocation_id=invocation_id,
                 user_query=input_data.user_query,
@@ -120,7 +120,7 @@ async def stream_graph(
 
         async def check_stop_requested() -> bool:
             try:
-                is_stop_requested = await database_client.check_stop_request_exists(
+                is_stop_requested = await invocations_service.check_stop_request_exists(
                     invocation_id=invocation_id,
                 )
 
@@ -258,7 +258,7 @@ async def stream_graph(
                     yield f"data: {json.dumps(event_data)}\n\n"
 
                     try:
-                        await database_client.update_invocation(
+                        await invocations_service.update_invocation(
                             profile_id=input_data.profile_id,
                             invocation_id=invocation_id,
                             graph_state=graph_state.model_dump(),
@@ -312,7 +312,7 @@ async def stream_graph(
         yield f"data: {json.dumps(event_data)}\n\n"
 
         try:
-            await database_client.update_invocation(
+            await invocations_service.update_invocation(
                 profile_id=input_data.profile_id,
                 invocation_id=invocation_id,
                 status="completed",
@@ -339,7 +339,7 @@ async def stream_graph(
         yield f"data: {json.dumps(event_data)}\n\n"
 
         try:
-            await database_client.update_invocation(
+            await invocations_service.update_invocation(
                 profile_id=input_data.profile_id,
                 invocation_id=invocation_id,
                 status="stopped",
@@ -365,7 +365,7 @@ async def stream_graph(
         yield f"data: {json.dumps(event_data)}\n\n"
 
         try:
-            await database_client.update_invocation(
+            await invocations_service.update_invocation(
                 profile_id=input_data.profile_id,
                 invocation_id=invocation_id,
                 status="error",
@@ -378,7 +378,7 @@ async def stream_graph(
 
     finally:
         try:
-            await database_client.delete_stop_request(
+            await invocations_service.delete_stop_request(
                 invocation_id=invocation_id,
             )
             logger.debug(
