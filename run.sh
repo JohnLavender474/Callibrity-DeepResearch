@@ -18,8 +18,8 @@ pip install -r requirements.txt
 
 cleanup() {
     echo "Shutting down services..."
-    kill $database_pid $storage_pid $embedding_pid $backend_pid
-    wait $database_pid $storage_pid $embedding_pid $backend_pid 2>/dev/null
+    kill $database_pid $storage_pid $embedding_pid $backend_pid $frontend_pid
+    wait $database_pid $storage_pid $embedding_pid $backend_pid $frontend_pid 2>/dev/null
 }
 
 trap cleanup EXIT INT TERM
@@ -41,6 +41,10 @@ embedding_pid=$!
 echo "Starting graph service..."
 (cd graph_service && bash run.sh) &
 backend_pid=$!
+
+echo "Starting frontend service on port 8004..."
+(cd frontend_service && bash run.sh) &
+frontend_pid=$!
 
 echo "All services started."
 
