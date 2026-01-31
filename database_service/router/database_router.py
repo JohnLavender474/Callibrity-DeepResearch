@@ -146,6 +146,35 @@ def update_invocation(
     return updated
 
 
+@router.post(
+    "/{profile_id}/invocations/{invocation_id}/stop",
+    response_model=InvocationResponse,
+)
+def request_stop_invocation(
+    profile_id: str,
+    invocation_id: str,
+    db: Session = Depends(get_db),
+):
+    logger.info(
+        f"Requesting stop for invocation {invocation_id} for profile {profile_id}"
+    )
+    
+    updated = database_service.update_invocation(
+        db=db,
+        invocation_id=invocation_id,
+        invocation_update=InvocationUpdate(status="stop_requested"),
+        profile_id=profile_id,
+    )
+    
+    if not updated:
+        raise HTTPException(
+            status_code=404,
+            detail="Invocation not found",
+        )
+    
+    return updated
+
+
 @router.delete(
     "/{profile_id}/invocations/{invocation_id}",
 )

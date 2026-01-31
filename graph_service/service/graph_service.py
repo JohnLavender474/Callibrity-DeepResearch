@@ -1,6 +1,7 @@
 import uuid
 import json
 import asyncio
+import time
 
 from typing import Optional
 
@@ -16,6 +17,7 @@ from model.graph_input import GraphInput
 from model.graph_state import GraphState
 from utils.stop_signal_waiter import StopSignalWaiter
 from exception.invocation_stopped_exception import DeepResearchInvocationStoppedException
+from client import database_client
 
 import logging
 
@@ -27,23 +29,14 @@ logger = logging.getLogger(__name__)
 
 HEARTBEAT_INTERVAL = 30
 MAX_TIME_THRESHOLD_PER_NODE = 600
-STOP_SIGNAL_POLL_INTERVAL = 0.5
+STOP_SIGNAL_POLL_INTERVAL = 5.0
 STOP_SIGNAL_TOTAL_WAIT_TIME = 600
-
-
-# This set contains the active graph invocation IDs.
-# When an invocation is requested to stop, its ID is
-# removed from this set.
-
-_invocations: set[str] = set()
 
 
 async def stream_graph(
     input_data: GraphInput,
 ):
     invocation_id = str(uuid.uuid4())
-
-    _invocations.add(invocation_id)
 
     logger.debug(f"Graph invocation id: {invocation_id}")
 
@@ -85,6 +78,21 @@ async def stream_graph(
             messages=graph_state_messages,
         )
 
+        # Create invocation record in database
+
+        try:
+            await database_client.create_invocation(
+                profile_id=input_data.profile_id,
+                invocation_id=invocation_id,
+                user_query=input_data.user_query,
+                status="running",
+            )
+        except Exception as e:
+            logger.warning(
+                f"Failed to create invocation in database: {str(e)}"
+            )
+            raise
+
         # Build the graph and instantiate a streaming coroutine.
         # If the input data specifies a custom start node, then
         # use that as the start node for the graph. However, if
@@ -102,7 +110,22 @@ async def stream_graph(
 
         # Set up stop signal waiter which is used to monitor for 
         # stop requests. If a stop is detected, then the waiter
-        # will complete its task.
+        # will complete its task. The waiter checks the database
+        # for the invocation status - if it's 'stop_requested',
+        # then the graph execution should stop.
+
+        async def check_stop_requested() -> bool:
+            try:
+                invocation = await database_client.get_invocation(
+                    profile_id=input_data.profile_id,
+                    invocation_id=invocation_id,
+                )
+                return invocation.get("status") == "stop_requested"
+            except Exception as e:
+                logger.warning(
+                    f"Failed to check stop status from database: {str(e)}"
+                )
+                return False
 
         stop_signal_waiter = StopSignalWaiter(
             max_time=STOP_SIGNAL_TOTAL_WAIT_TIME,
@@ -110,9 +133,7 @@ async def stream_graph(
         )
 
         stop_task = asyncio.ensure_future(
-            stop_signal_waiter.run(
-                lambda: invocation_id not in _invocations
-            )
+            stop_signal_waiter.run(check_stop_requested)
         )        
 
         # Record the elapsed time on the current node to complete.
@@ -120,9 +141,24 @@ async def stream_graph(
         # graph invocation should be stopped since it is likely 
         # that the node process has stalled indefinitely.
 
-        node_elapsed_time = 0
+        node_start_time: Optional[float] = None
 
-        while node_elapsed_time < MAX_TIME_THRESHOLD_PER_NODE:
+        while True:
+            # Calculate actual elapsed time if a node is running
+            
+            if node_start_time is not None:
+                node_elapsed_time = time.time() - node_start_time
+            else:
+                node_elapsed_time = 0
+            
+            if node_elapsed_time >= MAX_TIME_THRESHOLD_PER_NODE:
+                logger.debug(
+                    f"Graph invocation {invocation_id} exceeded max "
+                    f"time threshold on current node"
+                )                
+                raise DeepResearchInvocationStoppedException(
+                    invocation_id=invocation_id
+                )
 
             # If there is no pending task, then start the next
             # node execution in the graph stream. This resets the
@@ -133,7 +169,7 @@ async def stream_graph(
                     graph_stream.__anext__()
                 )
                 stop_signal_waiter.reset()
-                node_elapsed_time = 0
+                node_start_time = time.time()
 
             # Set up a race between the pending graph node task
             # and the stop signal task. If the stop signal task
@@ -204,6 +240,18 @@ async def stream_graph(
                     }
                     yield f"data: {json.dumps(event_data)}\n\n"
 
+                    try:
+                        await database_client.update_invocation(
+                            profile_id=input_data.profile_id,
+                            invocation_id=invocation_id,
+                            graph_state=graph_state.model_dump(),
+                        )
+                    except Exception as e:
+                        logger.warning(
+                            f"Failed to update invocation in database: {str(e)}"
+                        )
+                        raise
+
                 elif mode == "custom":
                     custom_data = data.copy()
 
@@ -224,11 +272,9 @@ async def stream_graph(
                 pending_task = None
 
             else:
-                node_elapsed_time += HEARTBEAT_INTERVAL
-
                 logger.debug(
                     f"Graph invocation {invocation_id} heartbeat after "
-                    f"{node_elapsed_time} seconds on current node"
+                    f"{node_elapsed_time:.1f} seconds on current node"
                 )
 
                 event_data = {
@@ -248,6 +294,19 @@ async def stream_graph(
         }
         yield f"data: {json.dumps(event_data)}\n\n"
 
+        try:
+            await database_client.update_invocation(
+                profile_id=input_data.profile_id,
+                invocation_id=invocation_id,
+                status="completed",
+                graph_state=graph_state.model_dump(),
+            )
+        except Exception as e:
+            logger.warning(
+                f"Failed to update completed invocation in database: {str(e)}"
+            )
+            raise
+
     except DeepResearchInvocationStoppedException:
         logger.info(
             f"Graph invocation {invocation_id} was stopped by user."
@@ -258,6 +317,18 @@ async def stream_graph(
             "event_type": "stopped",
         }
         yield f"data: {json.dumps(event_data)}\n\n"
+
+        try:
+            await database_client.update_invocation(
+                profile_id=input_data.profile_id,
+                invocation_id=invocation_id,
+                status="stopped",
+            )
+        except Exception as e:
+            logger.warning(
+                f"Failed to update stopped invocation in database: {str(e)}"
+            )
+            raise
 
     except Exception as e:
         logger.error(
@@ -273,9 +344,19 @@ async def stream_graph(
         }
         yield f"data: {json.dumps(event_data)}\n\n"
 
-    finally:    
-        _invocations.discard(invocation_id)
+        try:
+            await database_client.update_invocation(
+                profile_id=input_data.profile_id,
+                invocation_id=invocation_id,
+                status="error",
+            )
+        except Exception as update_error:
+            logger.warning(
+                f"Failed to update error invocation in database: {str(update_error)}"
+            )
+            raise
 
+    finally:
         try:
             if pending_task and not pending_task.done():            
                 pending_task.cancel()
