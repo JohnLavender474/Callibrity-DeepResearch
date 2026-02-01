@@ -39,16 +39,15 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { uploadFile } from '@/services/fileService'
+import type UploadedFile from '@/model/uploadedFile'
 
 
-interface UploadedFile {
-    name: string
-    uploadedAt: Date
+interface FileManagementProps {
+    profileId: string
 }
 
-const props = defineProps<{
-    profileId: string
-}>()
+const props = defineProps<FileManagementProps>()
 
 const emit = defineEmits<{
     (e: 'file-uploaded', filename: string): void
@@ -56,17 +55,15 @@ const emit = defineEmits<{
 }>()
 
 const fileInput = ref<HTMLInputElement | null>(null)
+
 const isDragOver = ref(false)
-const uploading = ref(false)
+
 const uploadedFiles = ref<UploadedFile[]>([])
+const uploading = ref(false)
+
 const errorMessage = ref('')
 
 const loadUploadedFiles = async (profileId: string) => {
-    if (!profileId) {
-        uploadedFiles.value = []
-        return
-    }
-
     await new Promise((resolve) => setTimeout(resolve, 200))
     uploadedFiles.value = [
         { name: 'research-paper.pdf', uploadedAt: new Date('2026-01-30') },
@@ -120,17 +117,24 @@ const handleFile = async (file: File) => {
 
     uploading.value = true
 
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    uploadedFiles.value.push({
-        name: file.name,
-        uploadedAt: new Date(),
-    })
+    try {
+        await uploadFile(props.profileId, file)
+        uploadedFiles.value.push({
+            name: file.name,
+            uploadedAt: new Date(),
+        })
+        emit('file-uploaded', file.name)
+    } catch (error) {
+        errorMessage.value =
+            error instanceof Error
+                ? error.message
+                : 'Failed to upload document'
+    } finally {
+        uploading.value = false
 
-    uploading.value = false
-    emit('file-uploaded', file.name)
-
-    if (fileInput.value) {
-        fileInput.value.value = ''
+        if (fileInput.value) {
+            fileInput.value.value = ''
+        }
     }
 }
 

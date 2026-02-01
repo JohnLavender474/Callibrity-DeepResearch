@@ -23,15 +23,15 @@ export default defineConfig({
       // The browser sees all requests as same-origin (port 8004),
       // which solves CORS issues. Example: fetch('/graph/...') 
       // is transparently forwarded to http://localhost:8001/graph/...
-      '/embeddings': {
+      '/api/embeddings': {
         target: 'http://localhost:8000',
         changeOrigin: true
       },
-      '/graph': {
+      '/api/graph': {
         target: 'http://localhost:8001',
         changeOrigin: true
       },
-      '/storage': {
+      '/api/storage': {
         target: 'http://localhost:8002',
         changeOrigin: true
       }, 

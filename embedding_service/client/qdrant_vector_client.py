@@ -1,6 +1,6 @@
 import logging
 
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 from qdrant_client import QdrantClient
 from qdrant_client.models import (
@@ -15,6 +15,8 @@ from qdrant_client.models import (
 
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_LIMIT = 100000
 
 
 class QdrantVectorClient:
@@ -141,7 +143,7 @@ class QdrantVectorClient:
     def get_all_points(
         self,
         collection_name: str,
-        limit: int = 100
+        limit: Optional[int] = None
     ) -> List[Dict[str, Any]]:
         logger.debug(
             f"Fetching all points from collection '{collection_name}' "
@@ -149,6 +151,8 @@ class QdrantVectorClient:
         )
         client: QdrantClient = self.client
         try:
+            limit = limit if limit is not None else DEFAULT_LIMIT
+
             points = client.scroll(
                 collection_name=collection_name,
                 limit=limit,

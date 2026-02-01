@@ -1,7 +1,7 @@
 import tempfile
 import os
 import logging
-from typing import Any
+from typing import Any, Optional
 
 from fastapi import (
     APIRouter,
@@ -127,7 +127,7 @@ async def delete_collection(collection_name: str, request: Request):
 async def get_documents(
     collection_name: str,
     request: Request,
-    limit: int = 100
+    limit: Optional[int] = None
 ):
     logger.info(
         f"Get documents request for collection '{collection_name}' "

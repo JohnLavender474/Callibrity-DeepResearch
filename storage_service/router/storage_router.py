@@ -18,6 +18,33 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/storage", tags=["storage"])
 
 
+@router.get("/collections/{collection_name}/documents")
+async def get_document_names(collection_name: str, request: Request):
+    logger.info(
+        f"Get document names request for collection '{collection_name}'"
+    )
+    blob_storage: BlobStorage = request.app.state.blob_storage
+
+    try:
+        documents = blob_storage.list_blobs(
+            collection_name=collection_name
+        )
+        logger.info(
+            f"Found {len(documents)} documents in collection "
+            f"'{collection_name}'"
+        )
+        return {
+            "documents": documents,
+            "count": len(documents)
+        }
+    except Exception as e:
+        logger.error(f"Failed to get document names: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get document names: {e}"
+        )
+
+
 @router.post("/collections/{collection_name}/blobs")
 async def upload_blob(
     collection_name: str,
@@ -64,28 +91,6 @@ async def upload_blob(
     finally:
         if temp_file_path and os.path.exists(temp_file_path):
             os.remove(temp_file_path)
-
-
-@router.get("/collections/{collection_name}/blobs")
-async def list_blobs(collection_name: str, request: Request):
-    logger.info(f"List blobs request for collection '{collection_name}'")
-    blob_storage: BlobStorage = request.app.state.blob_storage
-
-    try:
-        blobs = blob_storage.list_blobs(collection_name=collection_name)
-        logger.info(
-            f"Found {len(blobs)} blobs in collection '{collection_name}'"
-        )
-        return {
-            "blobs": blobs,
-            "count": len(blobs)
-        }
-    except Exception as e:
-        logger.error(f"Failed to list blobs: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to list blobs: {e}"
-        )
 
 
 @router.get("/collections/{collection_name}/blobs/{filename}")

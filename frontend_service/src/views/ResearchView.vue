@@ -44,7 +44,7 @@
     </main>
 
     <aside class="sidebar-right">
-      <FileUpload :profile-id="selectedProfileId" @file-uploaded="onFileUploaded" @file-deleted="onFileDeleted" />
+      <FileManagement :profile-id="selectedProfileId" @file-uploaded="onFileUploaded" @file-deleted="onFileDeleted" />
     </aside>
   </div>
 </template>
@@ -54,7 +54,7 @@ import { ref, onMounted } from 'vue'
 
 import ProfileSelector from '@/components/ProfileSelector.vue'
 import ChatHistory from '@/components/ChatHistory.vue'
-import FileUpload from '@/components/FileUpload.vue'
+import FileManagement from '@/components/FileManagement.vue'
 import { fetchProfiles, type Profile } from '@/services/profileService'
 
 
