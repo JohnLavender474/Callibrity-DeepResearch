@@ -101,7 +101,7 @@ watch(
 .chat-history {
     display: flex;
     flex-direction: column;
-    height: 75%;
+    height: 100%;
     background-color: #f8fafc;
     border: 1px solid #e2e8f0;
     border-radius: 8px;

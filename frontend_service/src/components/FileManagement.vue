@@ -186,6 +186,7 @@ watch(
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    height: 100%;
 }
 
 .drop-zone {
@@ -199,6 +200,7 @@ watch(
     background-color: #f8fafc;
     cursor: pointer;
     transition: all 0.2s;
+    flex-shrink: 0;
 }
 
 .drop-zone:hover {
@@ -243,6 +245,9 @@ watch(
     border: 1px solid #e2e8f0;
     border-radius: 8px;
     padding: 1rem;
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
 }
 
 .uploaded-files h4 {

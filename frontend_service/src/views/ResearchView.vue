@@ -4,13 +4,14 @@
       <div v-if="loading && !selectedProfileId" class="loader">
         <div class="spinner"></div>
       </div>
-      <ChatHistory
-        v-else
-        :profile-id="selectedProfileId"
-        :loading="loading && !selectedProfileId"
-        @conversation-selected="onConversationSelected"
-        @new-conversation="onNewConversation"
-      />
+      <div v-else class="component-wrapper">
+        <ChatHistory
+          :profile-id="selectedProfileId"
+          :loading="loading && !selectedProfileId"
+          @conversation-selected="onConversationSelected"
+          @new-conversation="onNewConversation"
+        />
+      </div>
     </aside>
 
     <main class="main-content">
@@ -44,7 +45,9 @@
     </main>
 
     <aside class="sidebar-right">
-      <FileManagement :profile-id="selectedProfileId" @file-uploaded="onFileUploaded" @file-deleted="onFileDeleted" />
+      <div class="component-wrapper">
+        <FileManagement :profile-id="selectedProfileId" @file-uploaded="onFileUploaded" @file-deleted="onFileDeleted" />
+      </div>
     </aside>
   </div>
 </template>
@@ -139,7 +142,12 @@ onMounted(async () => {
 }
 
 .sidebar-right {
-  height: fit-content;
+  height: 100%;
+  overflow: hidden;
+}
+
+.component-wrapper {
+  height: 80%;
 }
 
 .main-content {
