@@ -53,7 +53,7 @@ def update_documents_embedded(
     return updated
 
 
-@router.delete("/documents-embedded/{filename}")
+@router.delete("/documents-embedded")
 def delete_documents_embedded(
     filename: str,
     db: Session = Depends(get_db),
@@ -66,6 +66,7 @@ def delete_documents_embedded(
     )
 
     if not success:
+        logger.warning(f"Documents embedded entry '{filename}' not found")
         raise HTTPException(
             status_code=404,
             detail=f"Document '{filename}' not found",
@@ -74,7 +75,7 @@ def delete_documents_embedded(
     return {"status": "ok", "filename": filename}
 
 
-@router.get("/documents-embedded/{filename}")
+@router.get("/documents-embedded")
 def get_documents_embedded(
     filename: str,
     db: Session = Depends(get_db),

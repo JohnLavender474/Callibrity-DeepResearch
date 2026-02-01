@@ -189,6 +189,24 @@ async def delete_blob(
                 await client.delete(
                     f"{DATABASE_SERVICE_URL}/documents-stored/{collection_name}/{filename}",
                 )
+            except httpx.HTTPStatusError as http_exc:
+                if http_exc.response.status_code == 404:
+                    logger.warning(
+                        f"Document stored entry '{filename}' not found for profile "
+                        f"'{collection_name}' in database service"
+                    )
+                else:
+                    logger.error(
+                        f"Failed to delete document stored entry for "
+                        f"'{filename}' in profile '{collection_name}': {http_exc}"
+                    )
+                    raise HTTPException(
+                        status_code=500,
+                        detail=(
+                            f"Failed to delete document stored entry for "
+                            f"'{filename}' in profile '{collection_name}': {http_exc}"
+                        )
+                    )
             except Exception as e:
                 logger.error(
                     f"Failed to delete document stored entry for "
@@ -207,6 +225,24 @@ async def delete_blob(
                     f"{EMBEDDING_SERVICE_URL}/collections/{collection_name}/"
                     f"documents/{filename}",
                 )
+            except httpx.HTTPStatusError as http_exc:
+                if http_exc.response.status_code == 404:
+                    logger.warning(
+                        f"Document '{filename}' not found in embedding service "
+                        f"for collection '{collection_name}'"
+                    )
+                else:
+                    logger.error(
+                        f"Failed to delete document from embedding service "
+                        f"for '{filename}' in collection '{collection_name}': {http_exc}"
+                    )
+                    raise HTTPException(
+                        status_code=500,
+                        detail=(
+                            f"Failed to delete document from embedding service "
+                            f"for '{filename}' in collection '{collection_name}': {http_exc}"
+                        )
+                    )
             except Exception as e:
                 logger.error(
                     f"Failed to delete document from embedding service "

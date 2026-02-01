@@ -60,6 +60,10 @@ def delete_document_stored(
     )
 
     if not success:
+        logger.warning(
+            f"Document stored entry '{filename}' not found for profile "
+            f"'{profile_id}'"
+        )
         raise HTTPException(
             status_code=404,
             detail=f"Document '{filename}' not found for profile '{profile_id}'",

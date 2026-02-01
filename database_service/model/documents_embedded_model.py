@@ -9,3 +9,4 @@ class DocumentsEmbeddedModel(Base):
     id = Column(String, primary_key=True)
     filename = Column(String, nullable=False, unique=True)
     points = Column(Text, nullable=False)
+    collection_name = Column(String, nullable=False)

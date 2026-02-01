@@ -3,8 +3,8 @@ import os
 import logging
 import json
 import httpx
-from typing import Any, Optional
 
+from typing import Any, Optional
 from fastapi import (
     APIRouter,
     Request,
@@ -201,7 +201,7 @@ async def upload_document(
                     f"{DATABASE_SERVICE_URL}/documents-embedded",
                     json={
                         "filename": file.filename,
-                        "points": json.dumps([point.dict() for point in points]),
+                        "points": json.dumps([point.model_dump() for point in points]),
                     },
                 )
             except Exception as e:
@@ -283,6 +283,17 @@ async def delete_document(
                     f"{DATABASE_SERVICE_URL}/documents-embedded",
                     params={"filename": source_name},
                 )
+                logger.info(
+                    f"Deleted embedded document entry '{source_name}' "
+                    f"in database service"
+                )
+            except httpx.HTTPStatusError as http_exc:
+                if http_exc.response.status_code == 404:
+                    logger.warning(
+                        f"Embedded document '{source_name}' not found in database service"
+                    )
+                else:
+                    raise
             except Exception as e:
                 logger.error(f"Failed to delete embedded document in database service: {e}")
                 raise HTTPException(
@@ -403,7 +414,7 @@ async def replace_document(
                     f"{DATABASE_SERVICE_URL}/documents-embedded",
                     json={
                         "filename": file.filename,
-                        "points": json.dumps([point.dict() for point in points]),
+                        "points": json.dumps([point.model_dump() for point in points]),
                     },
                 )
             except Exception as e:

@@ -219,8 +219,20 @@ class QdrantVectorClient:
             f"Deleting points from '{collection_name}' "
             f"with source_name='{source_name}'"
         )
-        try:            
-            delete_result = self.client.delete(
+        try:
+            count_before = self.client.count(
+                collection_name=collection_name,
+                count_filter=Filter(
+                    must=[
+                        FieldCondition(
+                            key="source_name",
+                            match=MatchValue(value=source_name)
+                        )
+                    ]
+                )
+            ).count
+
+            self.client.delete(
                 collection_name=collection_name,
                 points_selector=Filter(
                     must=[
@@ -231,12 +243,13 @@ class QdrantVectorClient:
                     ]
                 )
             )
+
             logger.info(
-                f"Deleted {delete_result.deleted_count} points " + 
+                f"Deleted {count_before} points " + 
                 f"from '{collection_name}' " +
                 f"with source_name='{source_name}'"
             )
-            return delete_result.deleted_count
+            return count_before
         except Exception as e:
             logger.error(f"Failed to delete points by source: {e}")
             raise
