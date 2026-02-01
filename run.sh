@@ -14,12 +14,20 @@ source venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 
+# Enable job control to make this script a process group leader.
+# This ensures all child processes (and their descendants) form a 
+# process group that can be terminated together.
+set -m
+
 # Set up trap to clean up on exit
 
 cleanup() {
     echo "Shutting down services..."
-    kill $database_pid $storage_pid $embedding_pid $backend_pid $frontend_pid
-    wait $database_pid $storage_pid $embedding_pid $backend_pid $frontend_pid 2>/dev/null
+    # Kill the entire process group ($$) using negative PID syntax
+    # This terminates all descendants: bash scripts AND their spawned Python processes
+    kill -- -$$ 2>/dev/null
+    # Wait for all processes to finish gracefully after receiving SIGTERM
+    wait
 }
 
 trap cleanup EXIT INT TERM
@@ -28,23 +36,18 @@ trap cleanup EXIT INT TERM
 
 echo "Starting database service..."
 (cd database_service && bash run.sh) &
-database_pid=$!
 
 echo "Starting storage service on port 8002..."
 (cd storage_service && bash run.sh) &
-storage_pid=$!
 
 echo "Starting embedding service on port 8000..."
 (cd embedding_service && bash run.sh) &
-embedding_pid=$!
 
 echo "Starting graph service..."
 (cd graph_service && bash run.sh) &
-backend_pid=$!
 
 echo "Starting frontend service on port 8004..."
 (cd frontend_service && bash run.sh) &
-frontend_pid=$!
 
 echo "All services started."
 
