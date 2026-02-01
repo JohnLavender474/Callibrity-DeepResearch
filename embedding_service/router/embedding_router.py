@@ -204,6 +204,18 @@ async def upload_document(
                         "points": json.dumps([point.model_dump() for point in points]),
                     },
                 )
+                logger.info(
+                    f"Recorded embedded document '{file.filename}' "
+                    f"in database service"
+                )
+            except httpx.HTTPStatusError as http_exc:
+                if http_exc.response.status_code == 409:
+                    logger.warning(
+                        f"Embedded document '{file.filename}' already exists "
+                        f"in database service"
+                    )
+                else:
+                    raise
             except Exception as e:
                 logger.error(f"Failed to record embedded document in database service: {e}")
                 raise HTTPException(
