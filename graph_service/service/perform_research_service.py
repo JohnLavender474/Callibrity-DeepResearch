@@ -3,6 +3,8 @@ import json
 import logging
 import httpx
 
+from collections import Counter
+from statistics import mean, median
 from typing import Optional
 
 from langchain_core.messages import (
@@ -205,7 +207,7 @@ async def _search_documents(
                 ),
                 json={
                     "query": search_query,
-                    "top_k": 5,
+                    "top_k": 50,
                 },
             )
             response.raise_for_status()
@@ -248,7 +250,7 @@ def _format_document_context(
         context_parts.append("Retrieved documents:")
 
         for i, doc in enumerate(documents, 1):
-            content = doc.metadata.content
+            content = doc.content_summary
             context_parts.append(f"{i}. {content}")
 
     return "\n".join(context_parts)
@@ -286,6 +288,120 @@ def _extract_citations(
     return citations
 
 
+def _filter_documents_by_score(
+    documents: list[SearchResult],
+    max_docs: Optional[int] = None,
+) -> list[SearchResult]:
+    # Return early if no documents to filter
+    if not documents:
+        return []
+
+    # Extract all scores for statistical analysis
+    scores = [doc.score for doc in documents]
+
+    # Calculate central tendency metrics:
+    # - Mean: average score, sensitive to outliers
+    # - Median: middle value, robust to outliers
+    # - Mode: most frequent score, indicates clustering
+    score_mean = mean(scores)
+    score_median = median(scores)
+
+    # Counter finds the most common score values
+    # Mode represents the "typical" score in the distribution
+    score_counts = Counter(scores)
+    score_mode = score_counts.most_common(1)[0][0]
+
+    logger.debug(
+        f"Score statistics - Mean: {score_mean:.4f}, "
+        f"Median: {score_median:.4f}, Mode: {score_mode:.4f}"
+    )
+
+    # Dynamic threshold calculation:
+    # Use the maximum of mean, median, and mode to ensure we keep
+    # only the most relevant documents. This approach adapts to
+    # different score distributions:
+    # - If scores are normally distributed, mean ≈ median ≈ mode
+    # - If scores are skewed high, mode catches the cluster of good matches
+    # - If there are outlier low scores, median provides robustness
+    dynamic_threshold = max(score_mean, score_median, score_mode)
+
+    # Apply a dampening factor to avoid being too aggressive
+    # This keeps documents that are within 80% of the threshold
+    dampened_threshold = dynamic_threshold * 0.8
+
+    # Ensure minimum threshold to filter out clearly irrelevant results
+    min_threshold = 0.3
+
+    final_threshold = max(dampened_threshold, min_threshold)
+
+    logger.debug(
+        f"Filtering with threshold: {final_threshold:.4f} "
+        f"(dampened from {dynamic_threshold:.4f})"
+    )
+
+    # Filter documents that meet the threshold
+    filtered_docs = [
+        doc for doc in documents
+        if doc.score >= final_threshold
+    ]
+
+    # Sort by score descending to prioritize most relevant
+    filtered_docs.sort(key=lambda d: d.score, reverse=True)
+
+    # Apply hard cap to prevent context overflow
+    # even if many documents meet the threshold
+    if max_docs is not None:
+        filtered_docs = filtered_docs[:max_docs]
+
+    logger.debug(
+        f"Filtered {len(documents)} documents to "
+        f"{len(filtered_docs)} documents"
+    )
+
+    return filtered_docs
+
+
+async def _summarize_chunk(
+    task: str,
+    content: str,
+) -> str:
+    summarization_prompt = load_prompt("chunk_summarization.md")   
+
+    task_input = json.dumps({
+        "task": task,
+        "content": content,
+    })
+
+    summary = await claude_client.ainvoke(
+        input=[
+            SystemMessage(content=summarization_prompt),
+            HumanMessage(content=task_input),
+        ],
+    )
+
+    return summary.content
+
+
+async def _summarize_documents(
+    task: str,
+    documents: list[SearchResult],
+) -> list[SearchResult]:
+    logger.debug(f"Summarizing {len(documents)} documents for task: {task}")
+
+    async def summarize_single(doc: SearchResult) -> SearchResult:
+        original_content = doc.metadata.content
+        summary = await _summarize_chunk(task, original_content)
+        doc.content_summary = summary
+        return doc
+
+    summarized_docs = await asyncio.gather(
+        *[summarize_single(doc) for doc in documents]
+    )
+
+    logger.debug(f"Completed summarization of {len(summarized_docs)} documents")
+    return list(summarized_docs)
+
+
 async def _execute_task(
     task: str,
     prompt: str,
@@ -301,14 +417,24 @@ async def _execute_task(
             search_query,
         )
 
+        filtered_documents = _filter_documents_by_score(
+            documents=documents,
+            max_docs=25
+        )
+
         citations = _extract_citations(
             collection_name,
-            documents,
+            filtered_documents,
+        )
+
+        summarized_documents = await _summarize_documents(
+            task,
+            filtered_documents,
         )
 
         document_context = _format_document_context(
             search_query,
-            documents,
+            summarized_documents,
             chat_history,
         )
 

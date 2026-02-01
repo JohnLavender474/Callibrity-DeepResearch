@@ -12,5 +12,10 @@ class SearchResultMetadata(BaseModel):
 
 class SearchResult(BaseModel):
     id: str
-    score: float
+    score: float   
     metadata: SearchResultMetadata
+
+    # The content summary should be filled in 
+    # by the caller based on their own logic.
+    # It is blank by default.    
+    content_summary: str = ""
