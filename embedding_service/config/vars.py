@@ -16,3 +16,13 @@ def _get_required_env_var(var_name):
 QDRANT_URL = _get_required_env_var("QDRANT_URL")
 
 SENTENCE_TRANSFORMER_MODEL = _get_required_env_var("SENTENCE_TRANSFORMER_MODEL")
+
+
+def _get_optional_env_var(var_name, default_value):
+    return os.getenv(var_name, default_value)
+
+
+DATABASE_SERVICE_URL = _get_optional_env_var(
+    var_name="DATABASE_SERVICE_URL",
+    default_value="http://localhost:8003/api/database"
+)

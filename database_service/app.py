@@ -14,6 +14,8 @@ from router.invocations_router import router as invocations_router
 from router.profiles_router import router as profiles_router
 from router.invocation_stop_requests_router import router as invocation_stop_requests_router
 from router.conversations_router import router as conversations_router
+from router.documents_stored_router import router as documents_stored_router
+from router.documents_embedded_router import router as documents_embedded_router
 
 
 logging.basicConfig(
@@ -104,6 +106,8 @@ app.include_router(invocations_router)
 app.include_router(profiles_router)
 app.include_router(invocation_stop_requests_router)
 app.include_router(conversations_router)
+app.include_router(documents_stored_router)
+app.include_router(documents_embedded_router)
 
 
 @app.get("/health")

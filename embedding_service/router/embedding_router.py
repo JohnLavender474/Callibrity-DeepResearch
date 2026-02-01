@@ -1,6 +1,8 @@
 import tempfile
 import os
 import logging
+import json
+import httpx
 from typing import Any, Optional
 
 from fastapi import (
@@ -16,6 +18,7 @@ from model.search_query import SearchQuery
 from client.qdrant_vector_client import QdrantVectorClient
 from service.embedding_service import EmbeddingService
 from processor.document_processor import DocumentProcessor
+from config.vars import DATABASE_SERVICE_URL
 
 
 
@@ -95,33 +98,7 @@ async def create_collection(collection_name: str, request: Request):
             status_code=500,
             detail=f"Failed to create collection: {e}"
         )
-
-
-@router.delete("/collections/{collection_name}")
-async def delete_collection(collection_name: str, request: Request):
-    logger.info(f"Delete collection request for '{collection_name}'")
-    vector_client: QdrantVectorClient = (
-        request.app.state.vector_client
-    )
-
-    if not vector_client.collection_exists(collection_name):
-        logger.warning(f"Collection '{collection_name}' does not exist")
-        raise HTTPException(
-            status_code=404,
-            detail=f"Collection '{collection_name}' does not exist"
-        )
-
-    try:
-        vector_client.delete_collection(collection_name)
-        logger.info(f"Collection '{collection_name}' deleted successfully")
-        return {"status": "ok", "collection": collection_name}
-    except Exception as e:
-        logger.error(f"Failed to delete collection '{collection_name}': {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to delete collection '{collection_name}': {e}"
-        )
-
+    
 
 @router.get("/collections/{collection_name}/documents")
 async def get_documents(
@@ -218,6 +195,15 @@ async def upload_document(
                 points[i : i + batch_size]
             )
 
+        async with httpx.AsyncClient() as client:
+            await client.put(
+                f"{DATABASE_SERVICE_URL}/documents-embedded",
+                json={
+                    "filename": file.filename,
+                    "points": json.dumps([point.dict() for point in points]),
+                },
+            )
+
         logger.info(f"Document '{file.filename}' uploaded and indexed to collection '{collection_name}'")
         return {
             "status": "ok",
@@ -229,6 +215,87 @@ async def upload_document(
         raise
     finally:
         os.unlink(tmp_path)
+
+
+@router.delete("/collections/{collection_name}/documents/{source_name}")
+async def delete_document(
+    collection_name: str,
+    source_name: str,
+    request: Request
+):
+    logger.info(
+        f"Delete document request for collection '{collection_name}', "
+        f"source_name: {source_name}"
+    )
+    vector_client: QdrantVectorClient = (
+        request.app.state.vector_client
+    )
+
+    try:
+        if not vector_client.collection_exists(collection_name):
+            logger.error(f"Collection '{collection_name}' does not exist")
+            raise HTTPException(
+                status_code=404,
+                detail=f"Collection '{collection_name}' does not exist"
+            )
+
+        logger.debug(
+            f"Checking if document '{source_name}' exists "
+            f"in collection '{collection_name}'"
+        )
+        existing_count = vector_client.count_points_by_source(
+            collection_name,
+            source_name
+        )
+
+        if existing_count == 0:
+            logger.warning(
+                f"No chunks found for source_name='{source_name}' "
+                f"in collection '{collection_name}'"
+            )
+            raise HTTPException(
+                status_code=404,
+                detail=(
+                    f"No chunks found for source_name='{source_name}' "
+                    f"in collection '{collection_name}'"
+                )
+            )
+
+        logger.info(
+            f"Deleting {existing_count} chunks for '{source_name}' "
+            f"from collection '{collection_name}'"
+        )
+        deleted_count = vector_client.delete_points_by_source(
+            collection_name,
+            source_name
+        )
+
+        async with httpx.AsyncClient() as client:
+            await client.delete(
+                f"{DATABASE_SERVICE_URL}/documents-embedded",
+                params={"filename": source_name},
+            )
+
+        logger.info(
+            f"Successfully deleted {deleted_count} chunks "
+            f"for source_name='{source_name}' "
+            f"from collection '{collection_name}'"
+        )
+        return {
+            "status": "ok",
+            "source_name": source_name,
+            "chunks_deleted": deleted_count
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            f"Failed to delete document '{source_name}': {e}"
+        )
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to delete document: {e}"
+        )
 
 
 @router.put("/collections/{collection_name}/upload")
@@ -314,6 +381,15 @@ async def replace_document(
             vector_client.upsert(
                 collection_name,
                 points[i : i + batch_size]
+            )
+
+        async with httpx.AsyncClient() as client:
+            await client.put(
+                f"{DATABASE_SERVICE_URL}/documents-embedded",
+                json={
+                    "filename": file.filename,
+                    "points": json.dumps([point.dict() for point in points]),
+                },
             )
 
         logger.info(

@@ -1,6 +1,7 @@
 import logging
 import tempfile
 import os
+import httpx
 
 from fastapi import (
     APIRouter,
@@ -12,6 +13,7 @@ from fastapi import (
 from fastapi.responses import Response
 
 from service.blob_storage import BlobStorage
+from config.vars import DATABASE_SERVICE_URL, EMBEDDING_SERVICE_URL
 
 
 logger = logging.getLogger(__name__)
@@ -72,6 +74,15 @@ async def upload_blob(
             filename=file.filename,
             file_path=temp_file_path
         )
+
+        async with httpx.AsyncClient() as client:
+            await client.post(
+                f"{DATABASE_SERVICE_URL}/documents-stored",
+                json={
+                    "filename": file.filename,
+                    "profile_id": collection_name,
+                },
+            )
 
         logger.info(
             f"Uploaded blob: {file.filename} to collection '{collection_name}'"
@@ -161,6 +172,20 @@ async def delete_blob(
                 detail=f"Blob '{filename}' not found"
             )
 
+        async with httpx.AsyncClient() as client:
+            await client.delete(
+                f"{DATABASE_SERVICE_URL}/documents-stored",
+                params={
+                    "filename": filename,
+                    "profile_id": collection_name,
+                },
+            )
+
+            await client.delete(
+                f"{EMBEDDING_SERVICE_URL}/collections/{collection_name}/"
+                f"documents/{filename}",
+            )
+
         logger.info(f"Deleted blob: {filename}")
         return {
             "status": "ok",
@@ -173,28 +198,4 @@ async def delete_blob(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to delete blob: {e}"
-        )
-
-
-@router.delete("/collections/{collection_name}")
-async def delete_collection(collection_name: str, request: Request):
-    logger.info(
-        f"Delete collection storage request for '{collection_name}'"
-    )
-    blob_storage: BlobStorage = request.app.state.blob_storage
-
-    try:
-        blob_storage.delete_collection(collection_name=collection_name)
-        logger.info(f"Deleted collection storage: {collection_name}")
-        return {
-            "status": "ok",
-            "collection": collection_name
-        }
-    except Exception as e:
-        logger.error(
-            f"Failed to delete collection storage '{collection_name}': {e}"
-        )
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to delete collection storage: {e}"
         )
