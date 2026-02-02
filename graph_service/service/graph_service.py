@@ -252,7 +252,6 @@ async def stream_graph(
                         "event_type": "node_complete",
                         "event_value": {
                             "node": node_name,
-                            "graph_state": graph_state.model_dump(),
                         },
                     }
                     yield f"data: {json.dumps(event_data)}\n\n"
@@ -305,9 +304,7 @@ async def stream_graph(
         event_data = {
             "invocation_id": invocation_id,
             "event_type": "graph_complete",
-            "event_value": {
-                "graph_state": graph_state.model_dump(),
-            },           
+            "event_value": {},           
         }
         yield f"data: {json.dumps(event_data)}\n\n"
 
@@ -332,8 +329,8 @@ async def stream_graph(
         event_data = {
             "invocation_id": invocation_id,
             "event_type": "stopped",
-            "event_data": {
-                "message": str(e),
+            "event_value": {
+                "message": str(e.message),
             },
         }
         yield f"data: {json.dumps(event_data)}\n\n"
@@ -358,8 +355,8 @@ async def stream_graph(
         event_data = {
             "invocation_id": invocation_id,
             "event_type": "error",
-            "event_data": {                
-                "error": str(e),
+            "event_value": {                
+                "error": str(e.message),
             },
         }
         yield f"data: {json.dumps(event_data)}\n\n"

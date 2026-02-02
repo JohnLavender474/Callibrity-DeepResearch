@@ -14,7 +14,6 @@ from model.invocation import (
     InvocationResponse,
 )
 from service import invocations_service
-from service import invocation_stop_requests_service
 from dependencies import get_db
 
 import logging

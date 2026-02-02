@@ -1,0 +1,563 @@
+<template>
+  <div class="ai-message">
+    <div class="message-header">
+      <span class="ai-label">AI Response</span>
+      <span class="message-timestamp">{{ formatTime(timestamp) }}</span>
+      <span 
+        class="status-badge"
+        :class="statusClass"
+      >
+        {{ statusLabel }}
+      </span>
+    </div>
+
+    <div class="message-body">
+      <CollapsibleSection
+        title="Graph Execution"
+        :badge="stepCountBadge"
+        :defaultExpanded="false"
+      >
+        <div class="steps-container">
+          <div 
+            v-if="content.steps.length === 0" 
+            class="no-steps"
+          >
+            <template v-if="isLoading">
+              <div class="spinner-small"></div>
+              <span>Starting...</span>
+            </template>
+            <template v-else>
+              No steps recorded
+            </template>
+          </div>
+
+          <template
+            v-for="(step, index) in content.steps"
+            :key="index"
+          >
+            <div 
+              v-if="isTaskStep(step.type)"
+              class="step-item-expandable"
+            >
+              <CollapsibleSection
+                :title="getStepDisplayText(step)"
+                :badge="getTaskCountBadge(step)"
+                :defaultExpanded="false"
+              >
+                <div class="tasks-container">
+                  <div 
+                    v-for="(taskEntry, taskIndex) in getTaskEntries(step)"
+                    :key="taskIndex"
+                    class="task-entry"
+                  >
+                    <div class="task-header">
+                      <span class="task-icon">{{ taskEntry.success ? '✅' : '❌' }}</span>
+                      <span class="task-text">{{ taskEntry.task }}</span>
+                    </div>
+                    
+                    <div 
+                      v-if="taskEntry.citations && taskEntry.citations.length > 0"
+                      class="citations-container"
+                    >
+                      <span class="citations-label">Citations:</span>
+                      <div class="citation-bubbles">
+                        <button
+                          v-for="(citation, citIndex) in taskEntry.citations"
+                          :key="citIndex"
+                          class="citation-bubble"
+                          :title="citation.filename"
+                          @click="openPdfAtPage(step, citation)"
+                        >
+                          <span class="citation-filename">{{ truncateFilename(citation.filename) }}</span>
+                          <span class="citation-page">p.{{ getPageNumber(citation) }}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CollapsibleSection>
+            </div>
+
+            <div 
+              v-else
+              class="step-item"
+            >
+              <span class="step-icon">{{ getStepIcon(step.type) }}</span>
+              <span class="step-text">{{ getStepDisplayText(step) }}</span>
+            </div>
+          </template>
+        </div>
+      </CollapsibleSection>
+
+      <div class="result-section">
+        <div 
+          v-if="isLoading" 
+          class="loading-state"
+        >
+          <div class="spinner"></div>
+          <span>Processing...</span>
+        </div>
+
+        <div 
+          v-else-if="content.status === 'completed'" 
+          class="result-completed"
+        >
+          <div class="result-header">Final Result</div>
+          <div class="result-content">
+            {{ content.final_result || 'No result available' }}
+          </div>
+        </div>
+
+        <div 
+          v-else-if="content.status === 'stopped'" 
+          class="result-warning"
+        >
+          <div class="result-header">⚠️ Stopped</div>
+          <div class="result-content">
+            The graph execution was stopped before completion.
+          </div>
+        </div>
+
+        <div 
+          v-else-if="content.status === 'error'" 
+          class="result-error"
+        >
+          <div class="result-header">❌ Error</div>
+          <div class="result-content">
+            {{ content.error_message || 'An unknown error occurred' }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed } from 'vue'
+
+import CollapsibleSection from './CollapsibleSection.vue'
+import type AIMessageContent from '@/model/aiMessageContent'
+import type GraphStep from '@/model/graphStep'
+import type TaskEntry from '@/model/taskEntry'
+import type TaskCitation from '@/model/taskCitation'
+
+
+interface AIChatMessageProps {
+  content: AIMessageContent
+  timestamp: Date
+}
+
+const props = defineProps<AIChatMessageProps>()
+
+const formatTime = (date: Date): string => {
+  return date.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  })
+}
+
+const isLoading = computed(() => {
+  return props.content.status === 'running'
+})
+
+const statusClass = computed(() => {
+  return {
+    'status-running': props.content.status === 'running',
+    'status-completed': props.content.status === 'completed',
+    'status-stopped': props.content.status === 'stopped',
+    'status-error': props.content.status === 'error',
+  }
+})
+
+const statusLabel = computed(() => {
+  const labels: Record<string, string> = {
+    running: 'Running',
+    completed: 'Completed',
+    stopped: 'Stopped',
+    error: 'Error',
+  }
+  return labels[props.content.status] || 'Unknown'
+})
+
+const stepCountBadge = computed(() => {
+  const count = props.content.steps.length
+  return count === 1 ? '1 step' : `${count} steps`
+})
+
+const formatNodeName = (nodeName: string): string => {
+  return nodeName
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}
+
+const isTaskStep = (stepType: string): boolean => {
+  return stepType === 'parallel_tasks' || stepType === 'sequential_tasks'
+}
+
+const getTaskEntries = (step: GraphStep): TaskEntry[] => {
+  return step.details?.output?.task_entries || []
+}
+
+const getTaskCountBadge = (step: GraphStep): string => {
+  const count = getTaskEntries(step).length
+  return count === 1 ? '1 task' : `${count} tasks`
+}
+
+const truncateFilename = (filename: string, maxLength: number = 15): string => {
+  if (filename.length <= maxLength) {
+    return filename
+  }
+  
+  const extension = filename.includes('.') 
+    ? filename.slice(filename.lastIndexOf('.')) 
+    : ''
+  const nameWithoutExt = filename.slice(0, filename.length - extension.length)
+  const truncatedName = nameWithoutExt.slice(0, maxLength - extension.length - 3)
+  
+  return `${truncatedName}...${extension}`
+}
+
+const getPageNumber = (citation: TaskCitation): number => {
+  return citation.chunk_index + 1
+}
+
+const openPdfAtPage = (step: GraphStep, citation: TaskCitation): void => {
+  const profileId = step.details?.input?.collection_name || citation.collection_name
+  const filename = citation.filename
+  const page = getPageNumber(citation)
+  
+  const url = `/api/storage/collections/${profileId}/blobs/${encodeURIComponent(filename)}#page=${page}`
+  window.open(url, '_blank')
+}
+
+const getStepIcon = (stepType: string): string => {
+  if (stepType === 'process_selection') {
+    return '🎯'
+  }
+
+  if (stepType === 'simple_process') {
+    return '💬'
+  }
+
+  if (stepType === 'parallel_tasks') {
+    return '⚡'
+  }
+
+  if (stepType === 'sequential_tasks') {
+    return '📋'
+  }
+
+  if (stepType === 'perform_review') {
+    return '🔍'
+  }
+
+  if (stepType === 'generate_summary') {
+    return '📝'
+  }
+
+  return '✓'
+}
+
+const getStepDisplayText = (step: GraphStep): string => {
+  const stepType = step.type
+
+  if (stepType === 'process_selection') {
+    const processType = step.details?.output?.process_type
+    if (processType) {
+      const formatted = formatNodeName(processType)
+      return `Selected '${formatted}' process type`
+    }
+    return 'Analyzed query and selected process type'
+  }
+
+  if (stepType === 'simple_process') {
+    return 'Generated direct response'
+  }
+
+  if (stepType === 'parallel_tasks') {
+    const taskCount = step.details?.output?.task_entries?.length || 0
+    return `Executed ${taskCount} research tasks in parallel`
+  }
+
+  if (stepType === 'sequential_tasks') {
+    const taskCount = step.details?.output?.task_entries?.length || 0
+    return `Executed ${taskCount} research tasks in sequence`
+  }
+
+  if (stepType === 'perform_review') {
+    return 'Reviewed research results'
+  }
+
+  if (stepType === 'generate_summary') {
+    return 'Generated final summary'
+  }
+
+  return `Completed: ${formatNodeName(stepType)}`
+}
+</script>
+
+<style scoped>
+.ai-message {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  max-width: 90%;
+}
+
+.message-header {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.ai-label {
+  font-weight: 600;
+  color: #334155;
+}
+
+.message-timestamp {
+  color: #94a3b8;
+}
+
+.status-badge {
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.status-running {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+}
+
+.status-completed {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.status-stopped {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.status-error {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.message-body {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.steps-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.no-steps {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #94a3b8;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.spinner-small {
+  border: 2px solid #e2e8f0;
+  border-top: 2px solid #42b983;
+  border-radius: 50%;
+  width: 14px;
+  height: 14px;
+  animation: spin 1s linear infinite;
+  flex-shrink: 0;
+}
+
+.step-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.9rem;
+  color: #475569;
+}
+
+.step-item:last-child {
+  border-bottom: none;
+}
+
+.step-item-expandable {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.step-item-expandable:last-child {
+  border-bottom: none;
+}
+
+.step-icon {
+  flex-shrink: 0;
+  width: 1.5rem;
+  text-align: center;
+}
+
+.step-text {
+  flex: 1;
+}
+
+.tasks-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.task-entry {
+  padding: 0.75rem;
+  background-color: #f8fafc;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.task-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.task-icon {
+  flex-shrink: 0;
+  font-size: 0.9rem;
+}
+
+.task-text {
+  font-size: 0.875rem;
+  color: #334155;
+  line-height: 1.4;
+}
+
+.citations-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.citations-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.citation-bubbles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.citation-bubble {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background-color: #e0f2fe;
+  border: 1px solid #7dd3fc;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  color: #0369a1;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.citation-bubble:hover {
+  background-color: #bae6fd;
+  border-color: #38bdf8;
+}
+
+.citation-filename {
+  font-weight: 500;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.citation-page {
+  color: #0c4a6e;
+  font-weight: 600;
+}
+
+.result-section {
+  padding: 1rem;
+  border-radius: 8px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.spinner {
+  border: 2px solid #e2e8f0;
+  border-top: 2px solid #42b983;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.result-completed {
+  border-left: 3px solid #42b983;
+  padding-left: 1rem;
+}
+
+.result-warning {
+  border-left: 3px solid #f59e0b;
+  padding-left: 1rem;
+}
+
+.result-error {
+  border-left: 3px solid #dc2626;
+  padding-left: 1rem;
+}
+
+.result-header {
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  color: #334155;
+}
+
+.result-content {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+</style>

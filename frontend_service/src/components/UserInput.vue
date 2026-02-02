@@ -7,8 +7,7 @@
         placeholder="Enter your research query..."
         rows="4"
         :disabled="disabled"
-        @keydown.meta.enter="onSubmit"
-        @keydown.ctrl.enter="onSubmit"
+        @keydown.meta.enter="onSubmit"        
       ></textarea>
 
       <button

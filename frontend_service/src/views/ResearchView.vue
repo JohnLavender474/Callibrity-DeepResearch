@@ -14,6 +14,7 @@
             :disabled="profilesLoading"
             @profile-created="onProfileCreated"
           />
+
           <ProfileSelector
             :profiles="profiles"
             :loading="profilesLoading"
@@ -21,8 +22,8 @@
             :model-value="selectedProfileId"
             @profile-changed="onProfileChanged"
           />
-          <ChatHistory
-            ref="chatHistoryRef"
+
+          <ChatHistory            
             :profile-id="selectedProfileId"
             :loading="loading && !selectedProfileId"
             @conversation-selected="onConversationSelected"
@@ -34,9 +35,12 @@
       <main class="main-section">
         <ChatSection
           ref="chatSectionRef"
-          :conversation-id="selectedConversationId"
+          :messages="messages"
+          :is-processing="isProcessing"
+          :is-loading-conversation="isLoadingConversation"
+          :error="error"
           :profile-id="selectedProfileId"
-          @message-submitted="onMessageSubmitted"
+          @submit="onMessageSubmitted"
           @conversation-created="onConversationCreated"
         />
       </main>
@@ -62,11 +66,10 @@ import ChatHistory from '@/components/ChatHistory.vue'
 import ChatSection from '@/components/ChatSection.vue'
 import FileManagement from '@/components/FileManagement.vue'
 import { fetchProfiles } from '@/services/profileService'
-import { fetchConversation } from '@/services/conversationService'
 import ProfileSelector from '@/components/ProfileSelector.vue'
 import type Profile from '@/model/profile'
-import type Conversation from '@/model/conversation'
 import { useLocalStorage } from '@/composables/useLocalStorage'
+import { useChatSession } from '@/composables/useChatSession'
 
 
 const storage = useLocalStorage()
@@ -78,9 +81,18 @@ const profilesLoading = ref(false)
 
 const selectedProfileId = ref('')
 
-const selectedConversationId = ref('')
 const chatSectionRef = ref<InstanceType<typeof ChatSection> | null>(null)
-const chatHistoryRef = ref<InstanceType<typeof ChatHistory> | null>(null)
+
+const {
+  messages,
+  isProcessing,
+  isLoadingConversation,
+  error,
+  currentConversationId,
+  loadConversation,
+  submitMessage,
+  clearChatSession,
+} = useChatSession()
 
 const loadProfiles = async (preferredProfileId: string | null) => {
   profilesLoading.value = true
@@ -104,8 +116,6 @@ const loadProfiles = async (preferredProfileId: string | null) => {
     } else {
       selectedProfileId.value = profiles.value[0].id
     }
-
-    selectedConversationId.value = ''
   } else {
     selectedProfileId.value = ''
   }
@@ -117,23 +127,19 @@ const onProfileChanged = (profileId: string) => {
   selectedProfileId.value = profileId
   storage.setSelectedProfile(profileId)
 
-  selectedConversationId.value = ''
-  if (chatSectionRef.value) {
-    chatSectionRef.value.clearMessages()
-  }
+  clearChatSession()
 }
 
 const onProfileCreated = async (profile: Profile) => {
   await loadProfiles(profile.id)
-  selectedConversationId.value = ''
-  if (chatSectionRef.value) {
-    chatSectionRef.value.clearMessages()
-  }
+
+  clearChatSession()
 }
 
 const onConversationSelected = (conversationId: string) => {
-  selectedConversationId.value = conversationId
   if (selectedProfileId.value) {
+    loadConversation(conversationId, selectedProfileId.value)
+
     storage.setConversationForProfile(
       selectedProfileId.value,
       conversationId
@@ -142,7 +148,6 @@ const onConversationSelected = (conversationId: string) => {
 }
 
 const onConversationCreated = async (conversationId: string) => {
-  selectedConversationId.value = conversationId
   if (selectedProfileId.value) {
     storage.setConversationForProfile(
       selectedProfileId.value,
@@ -152,12 +157,13 @@ const onConversationCreated = async (conversationId: string) => {
 }
 
 const onNewConversation = () => {
-  selectedConversationId.value = ''
   if (selectedProfileId.value) {
     storage.clearConversationForProfile(selectedProfileId.value)
   }
+
+  clearChatSession()
+
   if (chatSectionRef.value) {
-    chatSectionRef.value.clearMessages()
     chatSectionRef.value.focusInput()
   }
 }
@@ -171,18 +177,31 @@ const onFileDeleted = (filename: string) => {
 }
 
 const onMessageSubmitted = async (query: string) => {
-  console.log(`Message submitted: ${query}`)
+  if (!selectedProfileId.value) {
+    console.error('No profile selected')    
+    return
+  }
+
+  await submitMessage(query, selectedProfileId.value)
 }
 
 onMounted(async () => {
   loading.value = true
+
   await loadProfiles(null)
+
   loading.value = false
 })
 
 watch(selectedProfileId, (newProfileId) => {
   if (newProfileId) {
     storage.setSelectedProfile(newProfileId)
+  }
+})
+
+watch(currentConversationId, (newConversationId, oldConversationId) => {
+  if (newConversationId && !oldConversationId && selectedProfileId.value) {
+    onConversationCreated(newConversationId)
   }
 })
 </script>

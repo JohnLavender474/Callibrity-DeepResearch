@@ -15,14 +15,7 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    host: '0.0.0.0',
-    watch: {
-      usePolling: true,
-    },
-    hmr: {
-      host: 'localhost',
-      port: 8004,
-    },
+    host: '0.0.0.0',   
     proxy: {
       '/api/embeddings': {
         target: 'http://embedding_service:8000',
@@ -35,11 +28,11 @@ export default defineConfig({
       '/api/storage': {
         target: 'http://storage_service:8002',
         changeOrigin: true
-      }, 
+      },
       '/api/database': {
         target: 'http://database_service:8003',
         changeOrigin: true
-      }    
+      }
     }
   }
 })

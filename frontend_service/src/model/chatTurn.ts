@@ -1,9 +1,7 @@
-import type { ChatTurnRole } from './chatTurnRole'
-
-
 export default interface ChatTurn {
     id: string
-    role: ChatTurnRole
-    content: string | Record<string, any>
+    conversation_id: string
+    role: string
+    data: Record<string, any>
     timestamp: string
 }

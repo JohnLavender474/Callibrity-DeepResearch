@@ -12,6 +12,7 @@ from model.conversation import (
     ConversationCreate,
     ConversationUpdate,
     ConversationResponse,
+    ConversationWithTurnsResponse,
 )
 from service import conversations_service
 from dependencies import get_db
@@ -42,10 +43,7 @@ def create_conversation(
             detail="Profile ID in URL does not match profile ID in request body",
         )
 
-    logger.info(
-        f"Creating conversation {conversation.id} "
-        f"for profile {profile_id}"
-    )
+    logger.info(f"Creating conversation for profile {profile_id}")
 
     return conversations_service.create_conversation(
         db=db,
@@ -64,6 +62,30 @@ def get_conversation(
     db: Session = Depends(get_db),
 ):
     conversation = conversations_service.get_conversation_by_id(
+        db=db,
+        conversation_id=conversation_id,
+        profile_id=profile_id,
+    )
+
+    if not conversation:
+        raise HTTPException(
+            status_code=404,
+            detail="Conversation not found",
+        )
+
+    return conversation
+
+
+@router.get(
+    "/{profile_id}/conversations/{conversation_id}/with-turns",
+    response_model=ConversationWithTurnsResponse,
+)
+def get_conversation_with_turns(
+    profile_id: str,
+    conversation_id: str,
+    db: Session = Depends(get_db),
+):
+    conversation = conversations_service.get_conversation_with_chat_turns(
         db=db,
         conversation_id=conversation_id,
         profile_id=profile_id,

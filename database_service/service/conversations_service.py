@@ -6,6 +6,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from model.conversation_model import ConversationModel
+from model.chat_turn_model import ChatTurnModel
 from model.conversation import (
     ConversationCreate,
     ConversationUpdate,
@@ -31,7 +32,7 @@ def create_conversation(
     )
 
     db.add(db_conversation)
-    db.commit()
+    db.commit()    
     db.refresh(db_conversation)
 
     return db_conversation
@@ -111,3 +112,32 @@ def delete_conversation_by_id(
     db.commit()
 
     return True
+
+
+def get_conversation_with_chat_turns(
+    db: Session,
+    conversation_id: str,
+    profile_id: str,
+):
+    conversation = get_conversation_by_id(
+        db=db,
+        conversation_id=conversation_id,
+        profile_id=profile_id,
+    )
+
+    if not conversation:
+        return None
+
+    chat_turns = db.query(ChatTurnModel).filter(
+        ChatTurnModel.conversation_id == conversation_id
+    ).order_by(ChatTurnModel.timestamp.asc()).all()
+
+    return {
+        "id": conversation.id,
+        "profile_id": conversation.profile_id,
+        "title": conversation.title,
+        "chat_turns": chat_turns,
+        "created_at": conversation.created_at,
+        "updated_at": conversation.updated_at,
+    }
+

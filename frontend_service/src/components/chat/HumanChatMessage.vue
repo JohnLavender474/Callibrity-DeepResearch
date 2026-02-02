@@ -1,5 +1,5 @@
 <template>
-  <div class="user-message">
+  <div class="human-message">
     <div class="message-content">
       {{ content }}
     </div>
@@ -11,12 +11,14 @@
 </template>
 
 <script setup lang="ts">
-interface UserMessageProps {
+
+
+interface HumanChatMessageProps {
   content: string
   timestamp: Date
 }
 
-defineProps<UserMessageProps>()
+defineProps<HumanChatMessageProps>()
 
 const formatTime = (date: Date): string => {
   return date.toLocaleTimeString('en-US', {
@@ -28,7 +30,7 @@ const formatTime = (date: Date): string => {
 </script>
 
 <style scoped>
-.user-message {
+.human-message {
   display: flex;
   flex-direction: column;
   align-items: flex-end;

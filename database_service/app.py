@@ -16,6 +16,7 @@ from router.documents_stored_router import router as documents_stored_router
 from router.documents_embedded_router import (
     router as documents_embedded_router
 )
+from router.chat_turns_router import router as chat_turns_router
 
 
 logging.basicConfig(
@@ -56,6 +57,7 @@ app.include_router(invocation_stop_requests_router)
 app.include_router(conversations_router)
 app.include_router(documents_stored_router)
 app.include_router(documents_embedded_router)
+app.include_router(chat_turns_router)
 
 
 @app.get("/health")
