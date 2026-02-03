@@ -60,6 +60,8 @@ services:
       POSTGRES_PORT: 5432
     ports:
       - "8003:8003"
+    volumes:
+      - ./database_service:/app
     depends_on:
       postgres:
         condition: service_healthy
@@ -82,6 +84,8 @@ services:
       DATABASE_SERVICE_URL: http://database_service:8003/api/database
     ports:
       - "8000:8000"
+    volumes:
+      - ./embedding_service:/app
     depends_on:
       database_service:
         condition: service_healthy
@@ -105,6 +109,7 @@ services:
     ports:
       - "8002:8002"
     volumes:
+      - ./storage_service:/app
       - blob_storage:/app/blob_storage
     depends_on:
       database_service:
@@ -130,6 +135,8 @@ services:
       EMBEDDING_SERVICE_URL: http://embedding_service:8000/api/embeddings
     ports:
       - "8001:8001"
+    volumes:
+      - ./graph_service:/app
     depends_on:
       database_service:
         condition: service_healthy
