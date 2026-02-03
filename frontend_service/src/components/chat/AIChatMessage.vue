@@ -89,51 +89,59 @@
         </div>
       </CollapsibleSection>
 
-      <div class="result-section">
-        <div 
-          v-if="isLoading" 
-          class="loading-state"
-        >
+      <CollapsibleSection
+        v-if="isLoading"
+        title="Final Result"
+        :defaultExpanded="true"
+      >
+        <div class="loading-state">
           <div class="spinner"></div>
           <span>Processing...</span>
         </div>
+      </CollapsibleSection>
 
-        <div 
-          v-else-if="content.status === 'completed'" 
-          class="result-completed"
-        >
-          <div class="result-header">Final Result</div>
-          <div class="result-content">
-            {{ content.final_result || 'No result available' }}
-          </div>
+      <CollapsibleSection
+        v-else-if="content.status === 'completed'"
+        title="Final Result"
+        :defaultExpanded="true"
+      >
+        <div class="result-completed">
+          <div class="result-content-scrollable markdown-content" v-html="renderMarkdown(content.final_result || '')"></div>
         </div>
+      </CollapsibleSection>
 
-        <div 
-          v-else-if="content.status === 'stopped'" 
-          class="result-warning"
-        >
+      <CollapsibleSection
+        v-else-if="content.status === 'stopped'"
+        title="Final Result"
+        :defaultExpanded="true"
+      >
+        <div class="result-warning">
           <div class="result-header">⚠️ Stopped</div>
           <div class="result-content">
             The graph execution was stopped before completion.
           </div>
         </div>
+      </CollapsibleSection>
 
-        <div 
-          v-else-if="content.status === 'error'" 
-          class="result-error"
-        >
+      <CollapsibleSection
+        v-else-if="content.status === 'error'"
+        title="Final Result"
+        :defaultExpanded="true"
+      >
+        <div class="result-error">
           <div class="result-header">❌ Error</div>
           <div class="result-content">
             {{ content.error_message || 'An unknown error occurred' }}
           </div>
         </div>
-      </div>
+      </CollapsibleSection>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { marked } from 'marked'
 
 import CollapsibleSection from './CollapsibleSection.vue'
 import type AIMessageContent from '@/model/aiMessageContent'
@@ -295,6 +303,10 @@ const getStepDisplayText = (step: GraphStep): string => {
   }
 
   return `Completed: ${formatNodeName(stepType)}`
+}
+
+const renderMarkdown = (markdown: string): string => {
+  return marked(markdown)
 }
 </script>
 
@@ -498,13 +510,6 @@ const getStepDisplayText = (step: GraphStep): string => {
   font-weight: 600;
 }
 
-.result-section {
-  padding: 1rem;
-  border-radius: 8px;
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-}
-
 .loading-state {
   display: flex;
   align-items: center;
@@ -559,5 +564,95 @@ const getStepDisplayText = (step: GraphStep): string => {
   line-height: 1.6;
   white-space: pre-wrap;
   word-wrap: break-word;
+}
+
+.result-content-scrollable {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.markdown-content {
+  white-space: normal;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  margin: 1rem 0 0.5rem 0;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.markdown-content h1 {
+  font-size: 1.5rem;
+}
+
+.markdown-content h2 {
+  font-size: 1.25rem;
+}
+
+.markdown-content h3 {
+  font-size: 1.1rem;
+}
+
+.markdown-content p {
+  margin: 0.5rem 0;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.markdown-content li {
+  margin: 0.25rem 0;
+}
+
+.markdown-content code {
+  background-color: #f1f5f9;
+  padding: 0.125rem 0.375rem;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.9em;
+  color: #0c4a6e;
+}
+
+.markdown-content pre {
+  background-color: #f1f5f9;
+  padding: 0.75rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.5rem 0;
+}
+
+.markdown-content pre code {
+  background-color: transparent;
+  padding: 0;
+  color: #1e293b;
+}
+
+.markdown-content blockquote {
+  border-left: 3px solid #cbd5e1;
+  padding-left: 1rem;
+  margin: 0.5rem 0;
+  color: #64748b;
+  font-style: italic;
+}
+
+.markdown-content a {
+  color: #0369a1;
+  text-decoration: underline;
+}
+
+.markdown-content a:hover {
+  color: #0c4a6e;
 }
 </style>

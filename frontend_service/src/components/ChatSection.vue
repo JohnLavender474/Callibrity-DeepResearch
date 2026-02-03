@@ -7,6 +7,7 @@
 
     <ChatMessages
       v-else
+      ref="chatMessagesRef"
       :messages="props.messages"
     />
 
@@ -24,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
 import ChatMessages from './ChatMessages.vue'
 import UserInput from './UserInput.vue'
@@ -48,6 +49,16 @@ const emit = defineEmits<{
 }>()
 
 const userInputRef = ref<InstanceType<typeof UserInput> | null>(null)
+const chatMessagesRef = ref<InstanceType<typeof ChatMessages> | null>(null)
+
+watch(
+  () => props.isLoadingConversation,
+  (isLoading, wasLoading) => {
+    if (wasLoading && !isLoading && props.messages.length > 0) {
+      chatMessagesRef.value?.scrollToBottom()
+    }
+  }
+)
 
 const onSubmit = async (query: string) => {
   emit('submit', query)
@@ -66,7 +77,8 @@ defineExpose({
 .chat-section {
   display: flex;
   flex-direction: column;
-  height: 90%;
+  flex: 1;
+  min-height: 0;  
   background-color: white;
   border: 1px solid #e2e8f0;
   border-radius: 8px;

@@ -256,7 +256,9 @@ h1 {
 .main-section {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 90%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 @media (max-width: 1200px) {

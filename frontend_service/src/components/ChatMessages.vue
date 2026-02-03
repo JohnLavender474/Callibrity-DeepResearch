@@ -1,5 +1,5 @@
 <template>
-  <div class="chat-messages">
+  <div ref="chatMessagesRef" class="chat-messages">
     <div v-if="props.messages.length === 0" class="empty-state">
       <p>No messages yet. Start by entering a query.</p>
     </div>
@@ -23,6 +23,8 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch, nextTick } from 'vue'
+
 import HumanChatMessage from './chat/HumanChatMessage.vue'
 import AIChatMessage from './chat/AIChatMessage.vue'
 import '@/styles/shared.css'
@@ -40,17 +42,36 @@ interface ChatMessagesProps {
 }
 
 const props = defineProps<ChatMessagesProps>()
+
+const chatMessagesRef = ref<HTMLDivElement | null>(null)
+
+const scrollToBottom = () => {
+  nextTick(() => {
+    if (chatMessagesRef.value) {
+      chatMessagesRef.value.scrollTop = chatMessagesRef.value.scrollHeight
+    }
+  })
+}
+
+watch(
+  () => props.messages,
+  () => {
+    scrollToBottom()
+  },
+  { deep: true }
+)
+
+defineExpose({
+  scrollToBottom,
+})
 </script>
 
 <style scoped>
 .chat-messages {
   flex: 1;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
   padding: 1.5rem;
   min-height: 0;
-  gap: 1rem;
 }
 
 .empty-state {
