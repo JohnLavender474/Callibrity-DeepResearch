@@ -1,10 +1,14 @@
 import json
+import asyncio
 
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 
 from model.graph_input import GraphInput
-from service.graph_service import stream_graph
+from service.graph_streamer import (
+    consume_graph_to_queue,
+    stream_from_queue,
+)
 
 import logging
 
@@ -23,7 +27,16 @@ async def invoke_graph(
         f"{json.dumps(input_data.model_dump(), indent=2)}"
     )
     
+    queue: asyncio.Queue = asyncio.Queue()
+    
+    asyncio.create_task(
+        consume_graph_to_queue(
+            input_data=input_data,
+            queue=queue,
+        )
+    )
+    
     return StreamingResponse(
-        stream_graph(input_data),
+        stream_from_queue(queue),
         media_type="text/event-stream",
     )
