@@ -1,24 +1,12 @@
 <template>
     <div class="file-upload">
-        <div class="drop-zone" :class="{ 'drag-over': isDragOver, 'uploading': uploading }"
-            @dragover.prevent="onDragOver" @dragleave.prevent="onDragLeave" @drop.prevent="onDrop"
-            @click="openFileDialog">
-            <input ref="fileInput" type="file" accept=".pdf" @change="onFileSelected" hidden />
+        <UploadFile
+            :uploading="uploading"
+            @file-selected="handleFile"
+        />
 
-            <div class="upload-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="17 8 12 3 7 8" />
-                    <line x1="12" y1="3" x2="12" y2="15" />
-                </svg>
-            </div>
-
-            <p v-if="uploading" class="upload-text">Uploading...</p>
-            <p v-else class="upload-text">
-                Drag & drop a PDF here<br />
-                <span class="upload-subtext">or click to select</span>
-            </p>
+        <div v-if="errorMessage" class="error-message">
+            {{ errorMessage }}
         </div>
 
         <div class="uploaded-files">
@@ -41,10 +29,6 @@
             </ul>
         </div>
 
-        <div v-if="errorMessage" class="error-message">
-            {{ errorMessage }}
-        </div>
-
         <DocumentModal
             :is-open="isModalOpen"
             :document="selectedDocument"
@@ -59,6 +43,7 @@
 import { ref, watch } from 'vue'
 import { uploadFile, fetchFilesForProfile } from '@/services/fileService'
 import DocumentModal from './modals/DocumentModal.vue'
+import UploadFile from './UploadFile.vue'
 import '@/styles/shared.css'
 import type FileInfo from '@/model/fileInfo'
 
@@ -72,10 +57,6 @@ const props = defineProps<FileManagementProps>()
 const emit = defineEmits<{
     (e: 'file-uploaded', filename: string): void
 }>()
-
-const fileInput = ref<HTMLInputElement | null>(null)
-
-const isDragOver = ref(false)
 
 const uploadedFiles = ref<FileInfo[]>([])
 const uploading = ref(false)
@@ -101,36 +82,6 @@ const loadUploadedFiles = async (profileId: string) => {
         uploadedFiles.value = []
     } finally {
         loadingDocuments.value = false
-    }
-}
-
-const openFileDialog = () => {
-    if (!uploading.value && fileInput.value) {
-        fileInput.value.click()
-    }
-}
-
-const onDragOver = () => {
-    isDragOver.value = true
-}
-
-const onDragLeave = () => {
-    isDragOver.value = false
-}
-
-const onDrop = (event: DragEvent) => {
-    isDragOver.value = false
-    const files = event.dataTransfer?.files
-    if (files && files.length > 0) {
-        handleFile(files[0])
-    }
-}
-
-const onFileSelected = (event: Event) => {
-    const target = event.target as HTMLInputElement
-    const files = target.files
-    if (files && files.length > 0) {
-        handleFile(files[0])
     }
 }
 
@@ -163,10 +114,6 @@ const handleFile = async (file: File) => {
                 : 'Failed to upload document'
     } finally {
         uploading.value = false
-
-        if (fileInput.value) {
-            fileInput.value.value = ''
-        }
     }
 }
 
@@ -199,57 +146,6 @@ watch(
     flex-direction: column;
     gap: 1rem;
     height: 100%;
-}
-
-.drop-zone {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
-    border: 2px dashed #cbd5e1;
-    border-radius: 8px;
-    background-color: #f8fafc;
-    cursor: pointer;
-    transition: all 0.2s;
-    flex-shrink: 0;
-}
-
-.drop-zone:hover {
-    border-color: #42b983;
-    background-color: #f0fdf4;
-}
-
-.drop-zone.drag-over {
-    border-color: #42b983;
-    background-color: #dcfce7;
-}
-
-.drop-zone.uploading {
-    opacity: 0.7;
-    cursor: not-allowed;
-}
-
-.upload-icon {
-    color: #94a3b8;
-    margin-bottom: 0.5rem;
-}
-
-.drop-zone:hover .upload-icon,
-.drop-zone.drag-over .upload-icon {
-    color: #42b983;
-}
-
-.upload-text {
-    text-align: center;
-    color: #64748b;
-    margin: 0;
-    font-size: 0.95rem;
-}
-
-.upload-subtext {
-    font-size: 0.85rem;
-    color: #94a3b8;
 }
 
 .uploaded-files {
