@@ -4,9 +4,10 @@ from pydantic import BaseModel
 
 
 class SearchResultMetadata(BaseModel):
-    chunk_index: Optional[int] = None
     source_name: str
     content: str
+    page_number: Optional[int] = None
+    chunk_index: Optional[int] = None
     custom_metadata: dict[str, Any] = {}
 
 

@@ -266,6 +266,7 @@ def _extract_citations(
 
     for doc in documents:
         filename = doc.metadata.source_name
+        page_number = doc.metadata.page_number
         chunk_index = doc.metadata.chunk_index
         content = doc.metadata.content
         score = doc.score
@@ -278,6 +279,7 @@ def _extract_citations(
                 TaskCitation(
                     filename=filename,
                     content_summary=content_summary,
+                    page_number=page_number,
                     chunk_index=chunk_index,
                     collection_name=collection_name,
                     score=score,

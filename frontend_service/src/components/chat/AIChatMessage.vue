@@ -55,24 +55,34 @@
                       <span class="task-text">{{ taskEntry.task }}</span>
                     </div>
                     
-                    <div 
-                      v-if="taskEntry.citations && taskEntry.citations.length > 0"
-                      class="citations-container"
+                    <CollapsibleSection
+                      v-if="taskEntry.result || (taskEntry.citations && taskEntry.citations.length > 0)"
+                      title="Details"
+                      :defaultExpanded="false"
                     >
-                      <span class="citations-label">Citations:</span>
-                      <div class="citation-bubbles">
-                        <button
-                          v-for="(citation, citIndex) in taskEntry.citations"
-                          :key="citIndex"
-                          class="citation-bubble"
-                          :title="citation.filename"
-                          @click="openPdfAtPage(step, citation)"
-                        >
-                          <span class="citation-filename">{{ truncateFilename(citation.filename) }}</span>
-                          <span class="citation-page">p.{{ getPageNumber(citation) }}</span>
-                        </button>
+                      <div v-if="taskEntry.result" class="task-result">
+                        <div class="task-result-content markdown-content" v-html="renderMarkdown(taskEntry.result)"></div>
                       </div>
-                    </div>
+
+                      <div 
+                        v-if="taskEntry.citations && taskEntry.citations.length > 0"
+                        class="citations-container"
+                      >
+                        <span class="citations-label">Citations:</span>
+                        <div class="citation-bubbles">
+                          <button
+                            v-for="(citation, citIndex) in taskEntry.citations"
+                            :key="citIndex"
+                            class="citation-bubble"
+                            :title="citation.filename"
+                            @click="openPdfAtPage(step, citation)"
+                          >
+                            <span class="citation-filename">{{ truncateFilename(citation.filename) }}</span>
+                            <span class="citation-page">p.{{ citation.page_number }}</span>
+                          </button>
+                        </div>
+                      </div>
+                    </CollapsibleSection>
                   </div>
                 </div>
               </CollapsibleSection>
@@ -227,16 +237,12 @@ const truncateFilename = (filename: string, maxLength: number = 15): string => {
   return `${truncatedName}...${extension}`
 }
 
-const getPageNumber = (citation: TaskCitation): number => {
-  return citation.chunk_index + 1
-}
-
 const openPdfAtPage = (step: GraphStep, citation: TaskCitation): void => {
   const profileId = step.details?.input?.collection_name || citation.collection_name
   const filename = citation.filename
-  const page = getPageNumber(citation)
+  const pageNumber = citation.page_number
   
-  const url = `/api/storage/collections/${profileId}/blobs/${encodeURIComponent(filename)}#page=${page}`
+  const url = `/api/storage/collections/${profileId}/blobs/${encodeURIComponent(filename)}#page=${pageNumber}`
   window.open(url, '_blank')
 }
 
@@ -305,7 +311,7 @@ const getStepDisplayText = (step: GraphStep): string => {
   return `Completed: ${formatNodeName(stepType)}`
 }
 
-const renderMarkdown = (markdown: string): string => {
+const renderMarkdown = (markdown: string) => {
   return marked(markdown)
 }
 </script>
@@ -457,13 +463,20 @@ const renderMarkdown = (markdown: string): string => {
   line-height: 1.4;
 }
 
+.task-result {
+  margin-bottom: 0.75rem;
+}
+
+.task-result-content {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #475569;
+}
+
 .citations-container {
   display: flex;
   flex-direction: column;
   gap: 0.375rem;
-  margin-top: 0.5rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid #e2e8f0;
 }
 
 .citations-label {
@@ -573,86 +586,5 @@ const renderMarkdown = (markdown: string): string => {
   word-wrap: break-word;
   max-height: 400px;
   overflow-y: auto;
-}
-
-.markdown-content {
-  white-space: normal;
-}
-
-.markdown-content h1,
-.markdown-content h2,
-.markdown-content h3,
-.markdown-content h4,
-.markdown-content h5,
-.markdown-content h6 {
-  margin: 1rem 0 0.5rem 0;
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.markdown-content h1 {
-  font-size: 1.5rem;
-}
-
-.markdown-content h2 {
-  font-size: 1.25rem;
-}
-
-.markdown-content h3 {
-  font-size: 1.1rem;
-}
-
-.markdown-content p {
-  margin: 0.5rem 0;
-}
-
-.markdown-content ul,
-.markdown-content ol {
-  margin: 0.5rem 0;
-  padding-left: 1.5rem;
-}
-
-.markdown-content li {
-  margin: 0.25rem 0;
-}
-
-.markdown-content code {
-  background-color: #f1f5f9;
-  padding: 0.125rem 0.375rem;
-  border-radius: 4px;
-  font-family: monospace;
-  font-size: 0.9em;
-  color: #0c4a6e;
-}
-
-.markdown-content pre {
-  background-color: #f1f5f9;
-  padding: 0.75rem;
-  border-radius: 6px;
-  overflow-x: auto;
-  margin: 0.5rem 0;
-}
-
-.markdown-content pre code {
-  background-color: transparent;
-  padding: 0;
-  color: #1e293b;
-}
-
-.markdown-content blockquote {
-  border-left: 3px solid #cbd5e1;
-  padding-left: 1rem;
-  margin: 0.5rem 0;
-  color: #64748b;
-  font-style: italic;
-}
-
-.markdown-content a {
-  color: #0369a1;
-  text-decoration: underline;
-}
-
-.markdown-content a:hover {
-  color: #0c4a6e;
 }
 </style>

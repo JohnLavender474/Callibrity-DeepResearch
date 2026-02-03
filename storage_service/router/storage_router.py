@@ -142,11 +142,12 @@ async def get_blob(
             )
 
         logger.info(f"Retrieved blob: {filename}")
+        
         return Response(
             content=blob_content,
-            media_type="application/octet-stream",
+            media_type="application/pdf",
             headers={
-                "Content-Disposition": f"attachment; filename={filename}"
+                "Content-Disposition": f"inline; filename={filename}"
             },
         )
     except HTTPException:
