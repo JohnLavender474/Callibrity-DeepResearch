@@ -432,20 +432,25 @@ async def _execute_task(
             max_docs=25
         )
         
-        relevant_documents = await _summarization_and_relevancy_filtering(
-            task,
-            filtered_documents,
-        )
+        if filtered_documents:
+            relevant_documents = await _summarization_and_relevancy_filtering(
+                task,
+                filtered_documents,
+            )
 
-        logger.debug(
-            f"Using {len(relevant_documents)} relevant documents out of "
-            f"{len(filtered_documents)} filtered documents"
-        )
+            logger.debug(
+                f"Using {len(relevant_documents)} relevant documents out of "
+                f"{len(filtered_documents)} filtered documents"
+            )
 
-        citations = _extract_citations(
-            collection_name,
-            relevant_documents,
-        )
+            citations = _extract_citations(
+                collection_name,
+                relevant_documents,
+            )
+        else:
+            logger.debug("No documents found after filtering")
+            relevant_documents = []
+            citations = []
 
         document_context = _format_document_context(
             search_query,
@@ -461,7 +466,15 @@ async def _execute_task(
             f"{formatted_prompt}\n\n"
             f"## Document Context\n\n"
             f"{document_context}"
-        )
+         )
+
+        if not relevant_documents:
+            system_message_str += (
+                "\n\n**IMPORTANT**: No documents were found to use as sources. "
+                "Please answer the question using your general knowledge and "
+                "clearly indicate in your response that no specific sources "
+                "were available."
+            )
 
         if chat_history:
             chat_history_str = "\n".join(

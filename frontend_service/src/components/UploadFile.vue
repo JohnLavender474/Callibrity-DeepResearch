@@ -1,7 +1,7 @@
 <template>
     <div
         class="drop-zone"
-        :class="{ 'drag-over': isDragOver, 'uploading': uploading }"
+        :class="{ 'drag-over': isDragOver }"
         @click="openFileDialog"
     >
         <input
@@ -32,8 +32,7 @@
             </svg>
         </div>
 
-        <p v-if="uploading" class="upload-text">Uploading...</p>
-        <p v-else class="upload-text">           
+        <p class="upload-text">           
             <span class="upload-subtext">Click to select a file for upload</span>
         </p>
     </div>
@@ -42,12 +41,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-
-interface UploadFileProps {
-    uploading: boolean
-}
-
-const props = defineProps<UploadFileProps>()
 
 const emit = defineEmits<{
     (e: 'file-selected', file: File): void
@@ -58,7 +51,7 @@ const fileInput = ref<HTMLInputElement | null>(null)
 const isDragOver = ref(false)
 
 const openFileDialog = () => {
-    if (!props.uploading && fileInput.value) {
+    if (fileInput.value) {
         fileInput.value.click()
     }
 }
@@ -99,11 +92,6 @@ const onFileSelected = (event: Event) => {
 .drop-zone.drag-over {
     border-color: #42b983;
     background-color: #dcfce7;
-}
-
-.drop-zone.uploading {
-    opacity: 0.7;
-    cursor: not-allowed;
 }
 
 .upload-icon {

@@ -1,7 +1,6 @@
 <template>
     <div class="file-upload">
         <UploadFile
-            :uploading="uploading"
             @file-selected="handleFile"
         />
 
@@ -46,6 +45,7 @@ import DocumentModal from './modals/DocumentModal.vue'
 import UploadFile from './UploadFile.vue'
 import '@/styles/shared.css'
 import type FileInfo from '@/model/fileInfo'
+import { useToasts } from '@/composables/useToasts'
 
 
 interface FileManagementProps {
@@ -59,13 +59,11 @@ const emit = defineEmits<{
 }>()
 
 const uploadedFiles = ref<FileInfo[]>([])
-const uploading = ref(false)
 const loadingDocuments = ref(false)
-
 const errorMessage = ref('')
-
 const isModalOpen = ref(false)
 const selectedDocument = ref<FileInfo | null>(null)
+const { addToast } = useToasts()
 
 const loadUploadedFiles = async (profileId: string) => {
     if (!profileId) {
@@ -101,20 +99,31 @@ const handleFile = async (file: File) => {
         return
     }
 
-    uploading.value = true
+    addToast(
+        `File ${file.name} is processing`,
+        'info',
+    )
 
-    try {
-        await uploadFile(props.profileId, file)
-        await loadUploadedFiles(props.profileId)
-        emit('file-uploaded', file.name)
-    } catch (error) {
-        errorMessage.value =
-            error instanceof Error
-                ? error.message
-                : 'Failed to upload document'
-    } finally {
-        uploading.value = false
-    }
+    uploadFile(props.profileId, file)
+        .then(() => {
+            emit('file-uploaded', file.name)
+            loadUploadedFiles(props.profileId)
+            addToast(
+                `File ${file.name} successfully uploaded`,
+                'success',
+            )
+        })
+        .catch((error) => {
+            errorMessage.value =
+                error instanceof Error
+                    ? error.message
+                    : 'Failed to upload document'
+
+            addToast(
+                `File ${file.name} failed to upload`,
+                'error',
+            )
+        })
 }
 
 const openDocumentModal = (document: FileInfo) => {
@@ -134,7 +143,11 @@ const handleDocumentDeleted = async () => {
 watch(
     () => props.profileId,
     (newProfileId) => {
-        loadUploadedFiles(newProfileId)
+        if (newProfileId) {
+            loadUploadedFiles(newProfileId)           
+        } else {            
+            uploadedFiles.value = []
+        }
     },
     { immediate: true }
 )
@@ -147,6 +160,7 @@ watch(
     gap: 1rem;
     height: 100%;
 }
+
 
 .uploaded-files {
     background-color: #f8fafc;

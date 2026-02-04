@@ -10,11 +10,17 @@
     <main>
       <RouterView />
     </main>
+
+    <ToastList :toasts="toasts" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
+import ToastList from '@/components/ToastList.vue'
+import { useToasts } from '@/composables/useToasts'
+
+const { toasts } = useToasts()
 </script>
 
 <style scoped>
