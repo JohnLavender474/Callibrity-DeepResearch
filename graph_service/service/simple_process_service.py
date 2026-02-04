@@ -1,18 +1,24 @@
-from langchain_core.messages import HumanMessage, BaseMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 
 from llm.claude_client import claude_client
 from model.simple_process import (
     SimpleProcessInput,
     SimpleProcessOutput,
 )
+from utils.prompt_loader import load_prompt
 
 
 async def execute_simple_process(
     input_data: SimpleProcessInput,
 ) -> SimpleProcessOutput:
+    simple_process_prompt = load_prompt("simple_process.md")
+
     message_list = (
         input_data.messages.copy()
         if input_data.messages else []
+    )
+    message_list.append(
+        SystemMessage(content=simple_process_prompt),
     )
     message_list.append(
         HumanMessage(content=input_data.query),

@@ -5,10 +5,12 @@ You are tasked with breaking down a user's query into
 
 ## Instructions
 
-Given the following user query, generate a list of
+Given the following user query and conversation context, generate a list of
 3-5 distinct sub-tasks that must be solved
 sequentially, where each task depends on or builds
-upon the results of the previous task(s).
+upon the results of the previous task(s). Consider
+prior context only if it provides essential information
+for the query.
 
 Each sub-task should be:
 - Specific and actionable

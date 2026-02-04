@@ -2,7 +2,7 @@
 
 You have executed multiple tasks to address a
 research query. The results of each task are
-available in the conversation history above.
+available in the context above.
 
 ## Instructions
 

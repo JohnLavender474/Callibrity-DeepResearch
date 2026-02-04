@@ -59,7 +59,7 @@ async def stream_graph(
         graph_state_messages: list[BaseMessage] = []
 
         for message in input_data.messages:
-            if message.role == "user":
+            if message.role == "human":
                 graph_state_messages.append(
                     HumanMessage(content=message.content)
                 )

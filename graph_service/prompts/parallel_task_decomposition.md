@@ -6,10 +6,11 @@ parallel.
 
 ## Instructions
 
-Given the following user query, generate a list of
+Given the following user query and conversation context, generate a list of
 3-5 distinct, non-overlapping sub-tasks that, when
 solved independently and combined, will comprehensively
-address the original query.
+address the original query. Consider prior context
+only if it provides essential information for the query.
 
 Each sub-task should be:
 - Specific and actionable
