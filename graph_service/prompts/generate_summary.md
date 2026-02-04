@@ -6,15 +6,32 @@ available in the context above.
 
 ## Instructions
 
-Generate a comprehensive summary that synthesizes
+Generate a comprehensive synthesis that weaves together
 the findings from all completed tasks. Your summary
 should:
 
-1. Synthesize key findings across all tasks
-2. Identify patterns, connections, or logical
-   progressions between results
-3. Provide a cohesive narrative addressing the
-   original query
+1. **Synthesize and connect**: Identify how findings
+   from different tasks relate to and build upon each
+   other. Look for patterns, contradictions, and
+   complementary insights.
+
+2. **Show reasoning**: Explain the significance of
+   key findings. What do these results mean for
+   answering the original query? Why do certain
+   connections matter?
+
+3. **Use varied formatting**: Mix natural language
+   narrative with bullet points, sections, or other
+   formatting patterns as appropriate to present
+   information clearly and maintain readability. Let
+   the structure serve the content.
+
+4. **Avoid info dumps**: Unless the original query
+   specifically asks for a simple enumeration or
+   listing, prioritize a narrative approach that
+   synthesizes findings rather than merely listing
+   them. Focus on the "so what"—the meaning and
+   implications of the information.
 
 ## Handling Task Failures
 
