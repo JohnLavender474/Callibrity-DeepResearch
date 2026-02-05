@@ -16,12 +16,12 @@
 }
 
 h1 {
-  color: #2c3e50;
+  color: white;
   margin-bottom: 1rem;
 }
 
 p {
-  color: #666;
+  color: white;
   font-size: 1.1rem;
   margin-bottom: 0.5rem;
 }

@@ -79,7 +79,7 @@ defineExpose({
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #94a3b8;
+  color: var(--color-text-tertiary);
   font-size: 0.95rem;
 }
 

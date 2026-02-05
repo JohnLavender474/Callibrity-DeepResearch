@@ -143,8 +143,8 @@ watch(
 }
 
 .modal {
-  background-color: #ffffff;
-  border-radius: 12px;
+  background-color: var(--color-bg-2);
+  border-radius: var(--size-border-radius-lg);
   width: min(420px, 90vw);
   box-shadow:
     0 20px 40px rgba(15, 23, 42, 0.2);
@@ -163,7 +163,7 @@ watch(
 .modal-header h2 {
   margin: 0;
   font-size: 1.1rem;
-  color: #0f172a;
+  color: var(--color-text-primary);
 }
 
 .modal-close {
@@ -171,7 +171,7 @@ watch(
   border: none;
   font-size: 1.4rem;
   cursor: pointer;
-  color: #475569;
+  color: var(--color-text-secondary);
 }
 
 .modal-body {
@@ -182,14 +182,22 @@ watch(
 
 .modal-body label {
   font-weight: 600;
-  color: #334155;
+  color: var(--color-text-primary);
 }
 
 .modal-body input {
   padding: 0.6rem 0.75rem;
-  border-radius: 8px;
-  border: 1px solid #cbd5e1;
+  border-radius: var(--size-border-radius);
+  border: 1px solid var(--color-border);
   font-size: 0.9rem;
+  background-color: var(--color-bg-3);
+  color: var(--color-text-primary);
+  transition: border-color var(--transition-base);
+}
+
+.modal-body input:focus {
+  outline: none;
+  border-color: var(--color-primary);
 }
 
 .modal-actions {
@@ -202,15 +210,16 @@ watch(
 .primary-button,
 .secondary-button {
   padding: 0.5rem 1rem;
-  border-radius: 8px;
+  border-radius: var(--size-border-radius);
   font-size: 0.85rem;
   cursor: pointer;
   border: 1px solid transparent;
+  transition: background-color var(--transition-base);
 }
 
 .primary-button {
-  background-color: #42b983;
-  color: #ffffff;
+  background-color: var(--color-primary);
+  color: white;
 }
 
 .primary-button:disabled {
@@ -219,14 +228,18 @@ watch(
 }
 
 .secondary-button {
-  background-color: #f1f5f9;
-  color: #334155;
-  border-color: #cbd5e1;
+  background-color: var(--color-surface-hover);
+  color: var(--color-text-primary);
+  border-color: var(--color-border);
+}
+
+.secondary-button:hover {
+  background-color: var(--color-surface-active);
 }
 
 .error-text {
   margin: 0;
-  color: #dc2626;
+  color: var(--color-error-text);
   font-size: 0.85rem;
 }
 </style>

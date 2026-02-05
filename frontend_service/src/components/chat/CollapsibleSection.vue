@@ -13,6 +13,7 @@
     <div 
       v-if="isExpanded" 
       class="collapsible-content"
+      :class="{ 'markdown-background': markdownBackground }"
     >
       <slot></slot>
     </div>
@@ -27,10 +28,12 @@ interface CollapsibleSectionProps {
   title: string
   badge?: string
   defaultExpanded?: boolean
+  markdownBackground?: boolean
 }
 
 const props = withDefaults(defineProps<CollapsibleSectionProps>(), {
   defaultExpanded: false,
+  markdownBackground: false,
 })
 
 const isExpanded = ref(props.defaultExpanded)
@@ -49,8 +52,8 @@ const toggle = () => {
 
 <style scoped>
 .collapsible-section {
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--size-border-radius-sm);
   overflow: hidden;
 }
 
@@ -60,27 +63,27 @@ const toggle = () => {
   gap: 0.5rem;
   width: 100%;
   padding: 0.75rem 1rem;
-  background-color: #f8fafc;
+  background-color: var(--color-surface-hover);
   border: none;
   cursor: pointer;
   font-size: 0.9rem;
   font-weight: 500;
-  color: #334155;
+  color: var(--color-text-primary);
   text-align: left;
-  transition: background-color 0.2s;
+  transition: background-color var(--transition-base);
 }
 
 .collapsible-header:hover {
-  background-color: #f1f5f9;
+  background-color: var(--color-surface-active);
 }
 
 .collapsible-header.expanded {
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .chevron {
   font-size: 0.7rem;
-  color: #64748b;
+  color: var(--color-text-secondary);
   width: 1rem;
 }
 
@@ -90,14 +93,18 @@ const toggle = () => {
 
 .header-badge {
   padding: 0.125rem 0.5rem;
-  background-color: #e2e8f0;
+  background-color: var(--color-border);
   border-radius: 9999px;
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--color-text-secondary);
 }
 
 .collapsible-content {
   padding: 1rem;
+  background-color: var(--color-bg-2);
+}
+
+.collapsible-content.markdown-background {
   background-color: white;
 }
 </style>

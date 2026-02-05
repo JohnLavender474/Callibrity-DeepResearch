@@ -36,12 +36,13 @@ const props = defineProps<ToastListProps>()
 
 .toast {
     padding: 0.75rem 1rem;
-    border-radius: 6px;
+    border-radius: var(--size-border-radius);
     font-size: 0.85rem;
     font-weight: 500;
     border: 1px solid transparent;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
     animation: slideIn 0.3s ease-out;
+    backdrop-filter: blur(8px);
 }
 
 @keyframes slideIn {
@@ -56,20 +57,20 @@ const props = defineProps<ToastListProps>()
 }
 
 .toast.info {
-    background-color: #eff6ff;
-    border-color: #bfdbfe;
-    color: #1d4ed8;
+    background-color: rgba(30, 42, 58, 0.95);
+    border-color: var(--color-info-border);
+    color: var(--color-info-text);
 }
 
 .toast.success {
-    background-color: #ecfdf3;
-    border-color: #bbf7d0;
-    color: #166534;
+    background-color: rgba(30, 58, 31, 0.95);
+    border-color: var(--color-success-border);
+    color: var(--color-success-text);
 }
 
 .toast.error {
-    background-color: #fef2f2;
-    border-color: #fecaca;
-    color: #dc2626;
+    background-color: rgba(58, 31, 31, 0.95);
+    border-color: var(--color-error-border);
+    color: var(--color-error-text);
 }
 </style>

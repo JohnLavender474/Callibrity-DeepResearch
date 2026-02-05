@@ -87,7 +87,7 @@ watch(() => props.isOpen, (newValue) => {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(15, 23, 42, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -97,8 +97,9 @@ watch(() => props.isOpen, (newValue) => {
 
 .modal-container {
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--size-border-radius);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
   max-width: 900px;
   width: 100%;
   max-height: 90vh;
@@ -111,14 +112,14 @@ watch(() => props.isOpen, (newValue) => {
   align-items: center;
   justify-content: space-between;
   padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .modal-title {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 600;
-  color: #334155;
+  color: black;
 }
 
 .close-button {
@@ -126,17 +127,17 @@ watch(() => props.isOpen, (newValue) => {
   border: none;
   cursor: pointer;
   padding: 0.25rem;
-  color: #64748b;
+  color: black;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
-  transition: all 0.2s ease;
+  border-radius: var(--size-border-radius-sm);
+  transition: all var(--transition-base);
 }
 
 .close-button:hover {
-  background: #f1f5f9;
-  color: #334155;
+  background: var(--color-surface-hover);
+  color: var(--color-text-primary);
 }
 
 .modal-body {
@@ -148,7 +149,58 @@ watch(() => props.isOpen, (newValue) => {
 .markdown-content {
   font-size: 0.95rem;
   line-height: 1.6;
-  color: #334155;
+  color: black;
+}
+
+.markdown-content :deep(p) {
+  margin: 0.75rem 0;
+}
+
+.markdown-content :deep(h1),
+.markdown-content :deep(h2),
+.markdown-content :deep(h3),
+.markdown-content :deep(h4),
+.markdown-content :deep(h5),
+.markdown-content :deep(h6) {
+  margin: 1rem 0 0.5rem 0;
+  font-weight: 600;
+}
+
+.markdown-content :deep(ul),
+.markdown-content :deep(ol) {
+  margin: 0.75rem 0;
+  padding-left: 1.5rem;
+}
+
+.markdown-content :deep(li) {
+  margin: 0.25rem 0;
+}
+
+.markdown-content :deep(pre) {
+  background-color: #f5f5f5;
+  padding: 1rem;
+  border-radius: var(--size-border-radius-sm);
+  overflow-x: auto;
+  margin: 0.75rem 0;
+}
+
+.markdown-content :deep(code) {
+  background-color: #f5f5f5;
+  padding: 0.125rem 0.25rem;
+  border-radius: 3px;
+  font-size: 0.875em;
+}
+
+.markdown-content :deep(pre code) {
+  background-color: transparent;
+  padding: 0;
+}
+
+.markdown-content :deep(blockquote) {
+  border-left: 3px solid var(--color-border);
+  padding-left: 1rem;
+  margin: 0.75rem 0;
+  color: #666;
 }
 
 .modal-footer {
@@ -157,51 +209,51 @@ watch(() => props.isOpen, (newValue) => {
   justify-content: flex-end;
   gap: 0.75rem;
   padding: 1rem 1.5rem;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--color-border);
 }
 
 .copy-button-modal {
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--size-border-radius);
   padding: 0.5rem 1rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #64748b;
-  transition: all 0.2s ease;
+  color: var(--color-text-secondary);
+  transition: all var(--transition-base);
   font-size: 0.875rem;
   font-weight: 500;
 }
 
 .copy-button-modal:hover {
-  background: #e2e8f0;
-  color: #334155;
-  border-color: #94a3b8;
+  background: var(--color-surface-hover);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-light);
 }
 
 .close-button-text {
   background: transparent;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--size-border-radius);
   padding: 0.5rem 1rem;
   cursor: pointer;
-  color: #64748b;
-  transition: all 0.2s ease;
+  color: black;
+  transition: all var(--transition-base);
   font-size: 0.875rem;
   font-weight: 500;
 }
 
 .close-button-text:hover {
-  background: #f1f5f9;
-  color: #334155;
-  border-color: #94a3b8;
+  background: var(--color-surface-hover);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-light);
 }
 
 .modal-enter-active,
 .modal-leave-active {
-  transition: opacity 0.2s ease;
+  transition: opacity var(--transition-base);
 }
 
 .modal-enter-from,

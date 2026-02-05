@@ -6,7 +6,7 @@ from langchain_core.messages import BaseMessage
 
 class SimpleProcessInput(BaseModel):
     query: str
-    messages: Optional[list[BaseMessage]] = None
+    chat_history: Optional[list[BaseMessage]] = None
 
 
 class SimpleProcessOutput(BaseModel):

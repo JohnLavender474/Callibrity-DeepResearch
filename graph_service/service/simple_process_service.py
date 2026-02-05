@@ -14,8 +14,8 @@ async def execute_simple_process(
     simple_process_prompt = load_prompt("simple_process.md")
 
     message_list = (
-        input_data.messages.copy()
-        if input_data.messages else []
+        input_data.chat_history.copy()
+        if input_data.chat_history else []
     )
     message_list.append(
         SystemMessage(content=simple_process_prompt),

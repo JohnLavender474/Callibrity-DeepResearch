@@ -73,6 +73,9 @@ const textareaRef = ref<HTMLTextAreaElement | null>(null)
 const isValidInput = computed(() => query.value.trim().length > 0)
 
 const submitButtonText = computed(() => {
+  if (!query.value.trim()) {
+    return 'Type in a prompt...'
+  }
   if (props.loading) {
     return 'Loading...'
   }
@@ -94,7 +97,8 @@ const onSubmit = () => {
 }
 
 const focus = () => {
-  textareaRef.value?.focus()
+  isCollapsed.value = false
+  textareaRef.value?.focus()  
 }
 
 const clear = () => {
@@ -110,8 +114,8 @@ defineExpose({
 <style scoped>
 .user-input {
   padding: 0.5rem 1.5rem 1.5rem;
-  border-top: 1px solid #e2e8f0;
-  background-color: #f8fafc;
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-bg-2);
   flex-shrink: 0;
 }
 
@@ -126,19 +130,19 @@ defineExpose({
   border: none;
   cursor: pointer;
   padding: 0.5rem;
-  color: #64748b;
-  transition: color 0.2s;
+  color: var(--color-text-secondary);
+  transition: color var(--transition-base);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .toggle-button:hover {
-  color: #42b983;
+  color: var(--color-primary);
 }
 
 .toggle-button svg {
-  transition: transform 0.3s ease;
+  transition: transform var(--transition-slow);
 }
 
 .toggle-button svg.rotated {
@@ -154,43 +158,45 @@ defineExpose({
 textarea {
   padding: 1rem;
   font-size: 1rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--size-border-radius-sm);
   font-family: inherit;
   resize: none;
-  transition: border-color 0.2s;
+  transition: border-color var(--transition-base);
+  background-color: var(--color-bg-3);
+  color: var(--color-text-primary);
 }
 
 textarea:focus {
   outline: none;
-  border-color: #42b983;
-  box-shadow: 0 0 0 3px rgba(66, 185, 131, 0.1);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
 }
 
 textarea:disabled {
-  background-color: #f1f5f9;
-  color: #94a3b8;
+  background-color: var(--color-surface-hover);
+  color: var(--color-text-tertiary);
   cursor: not-allowed;
 }
 
 button {
   padding: 0.75rem 1.5rem;
   font-size: 1rem;
-  background-color: #42b983;
+  background-color: var(--color-primary);
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--size-border-radius-sm);
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color var(--transition-base);
   font-weight: 500;
 }
 
 button:hover:not(:disabled) {
-  background-color: #38a071;
+  background-color: var(--color-primary-dark);
 }
 
 button:disabled {
-  background-color: #cbd5e1;
+  background-color: var(--color-border);
   cursor: not-allowed;
 }
 </style>

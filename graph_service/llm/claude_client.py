@@ -13,7 +13,7 @@ class ClaudeClientWrapper:
 
     def __init__(self):
         self._client = ChatAnthropic(
-            model="claude-haiku-4-5-20251001",
+            model="claude-opus-4-5",
             api_key=CLAUDE_API_KEY,
             temperature=0,
             max_tokens=16384,

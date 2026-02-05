@@ -25,7 +25,8 @@ const { toasts } = useToasts()
 
 <style scoped>
 header {
-  background-color: #2c3e50;
+  background-color: var(--color-bg-1);
+  border-bottom: 1px solid var(--color-border);
   padding: 1rem 2rem;
   position: fixed;
   top: 0;
@@ -40,18 +41,29 @@ nav {
 }
 
 nav a {
-  color: white;
+  color: var(--color-text-secondary);
   text-decoration: none;
   font-weight: 500;
-  transition: opacity 0.2s;
+  transition: color var(--transition-base);
+  position: relative;
 }
 
 nav a:hover {
-  opacity: 0.7;
+  color: var(--color-primary);
 }
 
 nav a.router-link-active {
-  color: #42b983;
+  color: var(--color-primary);
+}
+
+nav a.router-link-active::after {
+  content: '';
+  position: absolute;
+  bottom: -1rem;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--color-primary);
 }
 
 main {
@@ -59,5 +71,6 @@ main {
   padding-top: 4rem;
   max-width: 1200px;
   margin: 0 auto;
+  width: 100%;  
 }
 </style>

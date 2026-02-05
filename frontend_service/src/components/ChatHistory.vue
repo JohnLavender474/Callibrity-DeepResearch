@@ -73,23 +73,23 @@ const formatDate = (dateString: string): string => {
     display: flex;
     flex-direction: column;
     height: 100%;
-    background-color: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
+    background-color: var(--color-bg-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--size-border-radius);
     overflow: hidden;
 }
 
 .chat-history-header {
     padding: 1rem;
-    border-bottom: 1px solid #e2e8f0;
-    background-color: white;
+    border-bottom: 1px solid var(--color-border);
+    background-color: var(--color-bg-1);
     flex-shrink: 0;
 }
 
 .chat-history-header h3 {
     margin: 0;
     font-size: 1rem;
-    color: #1e293b;
+    color: var(--color-text-primary);
 }
 
 .chat-list {
@@ -101,24 +101,26 @@ const formatDate = (dateString: string): string => {
 
 .conversation-item {
     padding: 0.75rem 1rem;
-    border-radius: 6px;
+    border-radius: var(--size-border-radius-sm);
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: all var(--transition-base);
     margin-bottom: 0.25rem;
 }
 
 .conversation-item:hover {
-    background-color: #e2e8f0;
+    background-color: var(--color-surface-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .conversation-item.active {
-    background-color: #dbeafe;
-    border-left: 3px solid #42b983;
+    background-color: var(--color-surface-active);
+    border-left: 3px solid var(--color-primary);
 }
 
 .conversation-title {
     font-size: 0.9rem;
-    color: #334155;
+    color: var(--color-text-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -126,31 +128,31 @@ const formatDate = (dateString: string): string => {
 
 .conversation-date {
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--color-text-tertiary);
     margin-top: 0.25rem;
 }
 
 .no-conversations {
     padding: 2rem 1rem;
     text-align: center;
-    color: #94a3b8;
+    color: var(--color-text-tertiary);
     font-size: 0.9rem;
 }
 
 .new-conversation-btn {
     margin: 0.75rem;
     padding: 0.75rem;
-    background-color: #42b983;
+    background-color: var(--color-primary);
     color: white;
     border: none;
-    border-radius: 6px;
+    border-radius: var(--size-border-radius-sm);
     font-size: 0.9rem;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: background-color var(--transition-base);
     flex-shrink: 0;
 }
 
 .new-conversation-btn:hover {
-    background-color: #38a071;
+    background-color: var(--color-primary-dark);
 }
 </style>

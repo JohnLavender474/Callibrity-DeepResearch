@@ -76,43 +76,43 @@ const onFileSelected = (event: Event) => {
     align-items: center;
     justify-content: center;
     padding: 2rem;
-    border: 2px dashed #cbd5e1;
-    border-radius: 8px;
-    background-color: #f8fafc;
+    border: 2px dashed var(--color-border);
+    border-radius: var(--size-border-radius);
+    background-color: var(--color-bg-2);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all var(--transition-base);
     flex-shrink: 0;
 }
 
 .drop-zone:hover {
-    border-color: #42b983;
-    background-color: #f0fdf4;
+    border-color: var(--color-primary);
+    background-color: var(--color-bg-3);
 }
 
 .drop-zone.drag-over {
-    border-color: #42b983;
-    background-color: #dcfce7;
+    border-color: var(--color-primary);
+    background-color: var(--color-surface-hover);
 }
 
 .upload-icon {
-    color: #94a3b8;
+    color: var(--color-text-tertiary);
     margin-bottom: 0.5rem;
 }
 
 .drop-zone:hover .upload-icon,
 .drop-zone.drag-over .upload-icon {
-    color: #42b983;
+    color: var(--color-primary);
 }
 
 .upload-text {
     text-align: center;
-    color: #64748b;
+    color: var(--color-text-secondary);
     margin: 0;
     font-size: 0.95rem;
 }
 
 .upload-subtext {
     font-size: 0.85rem;
-    color: #94a3b8;
+    color: var(--color-text-tertiary);
 }
 </style>

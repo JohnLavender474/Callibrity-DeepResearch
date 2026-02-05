@@ -9,7 +9,20 @@
         </div>
 
         <div class="uploaded-files">
-            <h4>Uploaded Documents</h4>
+            <div class="uploaded-files-header">
+                <h4>Uploaded Documents</h4>
+                <button
+                    class="refresh-button"
+                    @click="loadUploadedFiles(props.profileId)"
+                    title="Refresh documents list"
+                    :disabled="loadingDocuments"
+                >
+                    <RefreshCw
+                        :size="18"
+                        :class="{ 'spinning': loadingDocuments }"
+                    />
+                </button>
+            </div>
             <div v-if="loadingDocuments" class="loading-container">
                 <div class="spinner"></div>
             </div>
@@ -40,6 +53,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { RefreshCw } from 'lucide-vue-next'
 import { uploadFile, fetchFilesForProfile } from '@/services/fileService'
 import DocumentModal from './modals/DocumentModal.vue'
 import UploadFile from './UploadFile.vue'
@@ -106,8 +120,11 @@ const handleFile = async (file: File) => {
 
     uploadFile(props.profileId, file)
         .then(() => {
+            console.log(`File ${file.name} uploaded successfully`)
+
             emit('file-uploaded', file.name)
             loadUploadedFiles(props.profileId)
+
             addToast(
                 `File ${file.name} successfully uploaded`,
                 'success',
@@ -161,11 +178,10 @@ watch(
     height: 100%;
 }
 
-
 .uploaded-files {
-    background-color: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--size-border-radius);
     padding: 1rem;
     flex: 1;
     overflow-y: auto;
@@ -174,11 +190,56 @@ watch(
     flex-direction: column;
 }
 
-.uploaded-files h4 {
-    margin: 0 0 0.75rem 0;
-    font-size: 0.9rem;
-    color: #475569;
+.uploaded-files-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
     flex-shrink: 0;
+}
+
+.uploaded-files-header h4 {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--color-text-primary);
+    font-weight: 600;
+}
+
+.refresh-button {
+    background: var(--color-surface-hover);
+    border: 1px solid var(--color-border);
+    border-radius: var(--size-border-radius-sm);
+    padding: 0.4rem 0.6rem;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    transition: all var(--transition-base);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.refresh-button:hover:not(:disabled) {
+    background: var(--color-surface-active);
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.refresh-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.refresh-button svg.spinning {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 .uploaded-files ul {
@@ -194,17 +255,18 @@ watch(
     display: flex;
     align-items: center;
     padding: 0.75rem;
-    background-color: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 4px;
+    background-color: var(--color-surface-hover);
+    border: 1px solid var(--color-border);
+    border-radius: var(--size-border-radius-sm);
     margin-bottom: 0.5rem;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all var(--transition-base);
 }
 
 .document-row:hover {
-    background-color: #f1f5f9;
-    border-color: #cbd5e1;
+    background-color: var(--color-surface-active);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.1);
 }
 
 .document-row:last-child {
@@ -214,7 +276,7 @@ watch(
 .no-documents {
     padding: 1rem;
     text-align: center;
-    color: #94a3b8;
+    color: var(--color-text-tertiary);
     font-size: 0.9rem;
     background-color: transparent;
     border: none;
@@ -223,12 +285,12 @@ watch(
 
 .no-documents:hover {
     background-color: transparent;
-    border-color: #e2e8f0;
+    border-color: transparent;
 }
 
 .file-name {
     font-size: 0.9rem;
-    color: #334155;
+    color: var(--color-text-primary);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -236,10 +298,10 @@ watch(
 
 .error-message {
     padding: 0.75rem 1rem;
-    background-color: #fef2f2;
-    border: 1px solid #fecaca;
-    border-radius: 6px;
-    color: #dc2626;
+    background-color: var(--color-error-bg);
+    border: 1px solid var(--color-error-border);
+    border-radius: var(--size-border-radius);
+    color: var(--color-error-text);
     font-size: 0.9rem;
 }
 </style>

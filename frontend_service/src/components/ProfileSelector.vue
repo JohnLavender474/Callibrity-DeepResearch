@@ -61,45 +61,47 @@ watch(
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 1rem;
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  background-color: var(--color-bg-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--size-border-radius);
 }
 
 label {
   font-weight: 600;
-  color: #475569;
+  color: var(--color-text-secondary);
   font-size: 0.9rem;
 }
 
 select {
   padding: 0.5rem 1rem;
   font-size: 0.9rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  background-color: white;
+  border: 1px solid var(--color-border);
+  border-radius: var(--size-border-radius-sm);
+  background-color: var(--color-bg-3);
+  color: var(--color-text-primary);
   cursor: pointer;
   min-width: 180px;
+  transition: border-color var(--transition-base);
 }
 
 select:hover:not(:disabled) {
-  border-color: #94a3b8;
+  border-color: var(--color-border-light);
 }
 
 select:focus {
   outline: none;
-  border-color: #42b983;
-  box-shadow: 0 0 0 2px rgba(66, 185, 131, 0.2);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2);
 }
 
 select:disabled {
-  background-color: #f1f5f9;
+  background-color: var(--color-surface-hover);
   cursor: not-allowed;
 }
 
 .loading-indicator {
   font-size: 0.8rem;
-  color: #64748b;
+  color: var(--color-text-tertiary);
   font-style: italic;
 }
 </style>

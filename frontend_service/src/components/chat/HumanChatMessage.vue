@@ -40,9 +40,9 @@ const formatTime = (date: Date): string => {
 .message-content {
   max-width: 70%;
   padding: 0.75rem 1rem;
-  background-color: #42b983;
+  background-color: var(--color-bg-3);
   color: white;
-  border-radius: 8px;
+  border-radius: var(--size-border-radius);
   word-wrap: break-word;
   white-space: pre-wrap;
   font-size: 0.95rem;
@@ -51,7 +51,7 @@ const formatTime = (date: Date): string => {
 
 .message-timestamp {
   font-size: 0.75rem;
-  color: #94a3b8;
+  color: var(--color-text-tertiary);
   padding-right: 0.5rem;
 }
 </style>

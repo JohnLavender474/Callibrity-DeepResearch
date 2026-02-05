@@ -81,6 +81,7 @@
                 :title="getStepDisplayText(step)"
                 :badge="getStepBadge(step)"
                 :defaultExpanded="false"
+                :markdownBackground="isSimpleProcessStep(step.type) || isReviewStep(step.type) || isSummaryStep(step.type)"
               >
                 <div v-if="isTaskStep(step.type)" class="tasks-container">
                   <div 
@@ -97,6 +98,7 @@
                       v-if="taskEntry.result || (taskEntry.citations && taskEntry.citations.length > 0)"
                       title="Details"
                       :defaultExpanded="false"
+                      :markdownBackground="true"
                     >
                       <div v-if="taskEntry.result" class="task-result">
                         <div class="markdown-header">
@@ -472,11 +474,11 @@ const renderMarkdown = (markdown: string) => {
 
 .ai-label {
   font-weight: 600;
-  color: #334155;
+  color: var(--color-text-primary);
 }
 
 .message-timestamp {
-  color: #94a3b8;
+  color: var(--color-text-tertiary);
 }
 
 .status-badge {
@@ -487,23 +489,23 @@ const renderMarkdown = (markdown: string) => {
 }
 
 .status-running {
-  background-color: #dbeafe;
-  color: #1d4ed8;
+  background-color: var(--color-info-bg);
+  color: var(--color-info-text);
 }
 
 .status-completed {
-  background-color: #dcfce7;
-  color: #166534;
+  background-color: var(--color-success-bg);
+  color: var(--color-success-text);
 }
 
 .status-stopped {
-  background-color: #fef3c7;
-  color: #92400e;
+  background-color: var(--color-warning-bg);
+  color: var(--color-warning-text);
 }
 
 .status-error {
-  background-color: #fee2e2;
-  color: #dc2626;
+  background-color: var(--color-error-bg);
+  color: var(--color-error-text);
 }
 
 .message-body {
@@ -523,14 +525,14 @@ const renderMarkdown = (markdown: string) => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #94a3b8;
+  color: var(--color-text-tertiary);
   font-size: 0.9rem;
   font-style: italic;
 }
 
 .spinner-small {
-  border: 2px solid #e2e8f0;
-  border-top: 2px solid #42b983;
+  border: 2px solid var(--color-border);
+  border-top: 2px solid var(--color-primary);
   border-radius: 50%;
   width: 14px;
   height: 14px;
@@ -543,9 +545,9 @@ const renderMarkdown = (markdown: string) => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 0;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--color-border);
   font-size: 0.9rem;
-  color: #475569;
+  color: var(--color-text-secondary);
 }
 
 .step-item:last-child {
@@ -553,7 +555,7 @@ const renderMarkdown = (markdown: string) => {
 }
 
 .step-item-expandable {
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .step-item-expandable:last-child {
@@ -586,24 +588,79 @@ const renderMarkdown = (markdown: string) => {
 
 .content-label {
   font-weight: 600;
-  color: #334155;
+  color: var(--color-text-primary);
   font-size: 0.875rem;
   display: block;
   margin-bottom: 0.25rem;
 }
 
 .content-value {
-  color: #475569;
+  color: var(--color-text-secondary);
   font-size: 0.875rem;
   font-weight: 500;
 }
 
 .content-text {
-  color: #475569;
+  color: var(--color-text-secondary);
   font-size: 0.875rem;
   line-height: 1.5;
   margin: 0;
   white-space: pre-wrap;
+}
+
+.markdown-content {
+  color: black;
+}
+
+.markdown-content :deep(p) {
+  margin: 0.75rem 0;
+}
+
+.markdown-content :deep(h1),
+.markdown-content :deep(h2),
+.markdown-content :deep(h3),
+.markdown-content :deep(h4),
+.markdown-content :deep(h5),
+.markdown-content :deep(h6) {
+  margin: 1rem 0 0.5rem 0;
+  font-weight: 600;
+}
+
+.markdown-content :deep(ul),
+.markdown-content :deep(ol) {
+  margin: 0.75rem 0;
+  padding-left: 1.5rem;
+}
+
+.markdown-content :deep(li) {
+  margin: 0.25rem 0;
+}
+
+.markdown-content :deep(pre) {
+  background-color: var(--color-bg-3);
+  padding: 1rem;
+  border-radius: var(--size-border-radius-sm);
+  overflow-x: auto;
+  margin: 0.75rem 0;
+}
+
+.markdown-content :deep(code) {
+  background-color: var(--color-bg-3);
+  padding: 0.125rem 0.25rem;
+  border-radius: 3px;
+  font-size: 0.875em;
+}
+
+.markdown-content :deep(pre code) {
+  background-color: transparent;
+  padding: 0;
+}
+
+.markdown-content :deep(blockquote) {
+  border-left: 3px solid var(--color-border);
+  padding-left: 1rem;
+  margin: 0.75rem 0;
+  color: var(--color-text-secondary);
 }
 
 .summary-content {
@@ -613,9 +670,9 @@ const renderMarkdown = (markdown: string) => {
 
 .task-entry {
   padding: 0.75rem;
-  background-color: #f8fafc;
-  border-radius: 6px;
-  border: 1px solid #e2e8f0;
+  background-color: var(--color-bg-3);
+  border-radius: var(--size-border-radius-sm);
+  border: 1px solid var(--color-border);
 }
 
 .task-header {
@@ -632,7 +689,7 @@ const renderMarkdown = (markdown: string) => {
 
 .task-text {
   font-size: 0.875rem;
-  color: #334155;
+  color: var(--color-text-primary);
   line-height: 1.4;
 }
 
@@ -649,22 +706,22 @@ const renderMarkdown = (markdown: string) => {
 }
 
 .icon-button {
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  border-radius: 4px;
+  background: var(--color-surface-hover);
+  border: 1px solid var(--color-border);
+  border-radius: var(--size-border-radius-sm);
   padding: 0.25rem 0.5rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  color: #64748b;
-  transition: all 0.2s ease;
+  color: var(--color-text-secondary);
+  transition: all var(--transition-base);
 }
 
 .icon-button:hover {
-  background: #e2e8f0;
-  color: #334155;
-  border-color: #94a3b8;
+  background: var(--color-surface-active);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-light);
 }
 
 .icon-button:active {
@@ -673,8 +730,8 @@ const renderMarkdown = (markdown: string) => {
 
 .task-result-content {
   font-size: 0.875rem;
-  line-height: 1.5;
-  color: #475569;
+  line-height: 1.6;
+  color: black;
 }
 
 .citations-container {
@@ -694,18 +751,18 @@ const renderMarkdown = (markdown: string) => {
   align-items: center;
   gap: 0.25rem;
   padding: 0.25rem 0.5rem;
-  background-color: #e0f2fe;
-  border: 1px solid #7dd3fc;
+  background-color: var(--color-info-bg);
+  border: 1px solid var(--color-info-border);
   border-radius: 9999px;
   font-size: 0.75rem;
-  color: #0369a1;
+  color: var(--color-info-text);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition-base);
 }
 
 .citation-bubble:hover {
-  background-color: #bae6fd;
-  border-color: #38bdf8;
+  background-color: var(--color-info-bg);
+  border-color: var(--color-info-border);
 }
 
 .citation-filename {
@@ -717,7 +774,7 @@ const renderMarkdown = (markdown: string) => {
 }
 
 .citation-page {
-  color: #0c4a6e;
+  color: var(--color-info-text);
   font-weight: 600;
 }
 
@@ -725,13 +782,13 @@ const renderMarkdown = (markdown: string) => {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  color: #64748b;
+  color: var(--color-text-secondary);
   font-size: 0.9rem;
 }
 
 .spinner {
-  border: 2px solid #e2e8f0;
-  border-top: 2px solid #42b983;
+  border: 2px solid var(--color-border);
+  border-top: 2px solid var(--color-primary);
   border-radius: 50%;
   width: 20px;
   height: 20px;
@@ -749,17 +806,17 @@ const renderMarkdown = (markdown: string) => {
 }
 
 .result-completed {
-  border-left: 3px solid #42b983;
+  border-left: 3px solid var(--color-primary);
   padding-left: 1rem;
 }
 
 .result-warning {
-  border-left: 3px solid #f59e0b;
+  border-left: 3px solid var(--color-status-warning);
   padding-left: 1rem;
 }
 
 .result-error {
-  border-left: 3px solid #dc2626;
+  border-left: 3px solid var(--color-status-error);
   padding-left: 1rem;
 }
 
@@ -767,7 +824,7 @@ const renderMarkdown = (markdown: string) => {
   font-weight: 600;
   font-size: 0.9rem;
   margin-bottom: 0.5rem;
-  color: #334155;
+  color: var(--color-text-primary);
 }
 
 .result-content {

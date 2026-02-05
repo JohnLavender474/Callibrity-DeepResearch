@@ -73,7 +73,7 @@ async def node_simple_process(state: GraphState) -> GraphState:
     logger.debug("Starting simple process node")
     input_data = SimpleProcessInput(
         query=state.user_query,
-        messages=state.messages,
+        chat_history=state.messages,
     )
 
     output = await execute_simple_process(input_data)
@@ -100,6 +100,7 @@ async def node_parallel_tasks(
     input_data = PerformResearchInput(
         query=state.user_query,
         collection_name=state.profile_id,
+        chat_history=state.messages,
     )
     
     output = await execute_tasks_in_parallel(input_data)
@@ -126,6 +127,7 @@ async def node_sequential_tasks(
     input_data = PerformResearchInput(
         query=state.user_query,
         collection_name=state.profile_id,
+        chat_history=state.messages,
     )
     
     output = await execute_tasks_in_sequence(input_data)
@@ -151,6 +153,7 @@ async def node_perform_review(
     logger.debug("Starting perform review node")
     input_data = PerformReviewInput(
         task_entries=state.task_entries,
+        chat_history=state.messages,
     )
     
     output = await execute_perform_review(input_data)
@@ -177,6 +180,7 @@ async def node_generate_summary(
     input_data = GenerateSummaryInput(
         task_entries=state.task_entries,
         review=state.review,
+        chat_history=state.messages,
     )
     
     output = await execute_generate_summary(input_data)

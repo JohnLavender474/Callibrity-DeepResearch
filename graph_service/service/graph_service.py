@@ -28,9 +28,11 @@ logger = logging.getLogger(__name__)
 # into environment variables if needed)
 
 HEARTBEAT_INTERVAL = 30
-MAX_TIME_THRESHOLD_PER_NODE = 600
+
+MAX_TIME_THRESHOLD_PER_NODE = 1200
+
 STOP_SIGNAL_POLL_INTERVAL = 5.0
-STOP_SIGNAL_TOTAL_WAIT_TIME = 600
+STOP_SIGNAL_TOTAL_WAIT_TIME = 1200
 
 
 async def stream_graph(

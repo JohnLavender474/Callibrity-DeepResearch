@@ -1,9 +1,5 @@
 <template>
   <div class="research-container">
-    <header class="research-header">
-      <h1>Deep Research</h1>
-    </header>
-
     <div class="content-area">
       <aside class="sidebar">
         <div v-if="loading && !selectedProfileId" class="loader">
@@ -225,16 +221,12 @@ watch(currentConversationId, (newConversationId, oldConversationId) => {
   padding: 1rem 0;
 }
 
-h1 {
-  color: #2c3e50;
-  margin: 0;
-}
-
 .research-container {
   display: flex;
   flex-direction: column;
   height: calc(100vh - 2rem);
   padding: 1rem;
+  background-color: var(--color-bg-1);
 }
 
 .content-area {
@@ -248,11 +240,15 @@ h1 {
 .sidebar {
   height: 90%;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .sidebar-right {
   height: 90%;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .component-wrapper {

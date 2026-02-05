@@ -31,6 +31,7 @@ from model.semantic_search_query import (
     SemanticSearchQuery,
 )
 from utils.prompt_loader import load_prompt
+from utils.copy_messages import copy_messages
 
 
 logger = logging.getLogger(__name__)
@@ -92,11 +93,21 @@ async def execute_tasks_in_parallel(
         "task_execution.md",
     )
 
-    task_coroutines = [
-        _execute_task(
+    async def _execute_task_with_message_history(
+        task: str,
+    ) -> TaskEntry:
+        return await _execute_task(
             task=task,
             prompt=task_execution_prompt,
-            collection_name=input_data.collection_name,            
+            collection_name=input_data.collection_name,
+            chat_history=copy_messages(
+                input_data.chat_history
+            ) if input_data.chat_history else None,
+        )
+
+    task_coroutines = [
+        _execute_task_with_message_history(
+            task=task,
         )
         for task in decomposition.tasks
     ]
@@ -133,7 +144,9 @@ async def execute_tasks_in_sequence(
     )
 
     task_entries: list[TaskEntry] = []
-    chat_history: list[BaseMessage] = []
+    chat_history: list[BaseMessage] = copy_messages(
+        input_data.chat_history
+    ) if input_data.chat_history else []
 
     for task in decomposition.tasks:
         logger.debug(

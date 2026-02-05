@@ -79,9 +79,9 @@ defineExpose({
   flex-direction: column;
   flex: 1;
   min-height: 0;  
-  background-color: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  background-color: var(--color-bg-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--size-border-radius);
   overflow: hidden;
 }
 
@@ -92,15 +92,15 @@ defineExpose({
   align-items: center;
   justify-content: center;
   gap: 1rem;
-  color: #64748b;
+  color: var(--color-text-secondary);
   font-size: 0.95rem;
 }
 
 .error-banner {
   padding: 0.75rem 1rem;
-  background-color: #fef2f2;
-  border-top: 1px solid #fecaca;
-  color: #dc2626;
+  background-color: var(--color-error-bg);
+  border-top: 1px solid var(--color-error-border);
+  color: var(--color-error-text);
   font-size: 0.9rem;
   flex-shrink: 0;
 }

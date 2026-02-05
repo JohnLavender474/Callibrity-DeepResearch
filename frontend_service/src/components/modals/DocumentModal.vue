@@ -163,7 +163,7 @@ const handleDelete = async () => {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(15, 23, 42, 0.6);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -171,9 +171,10 @@ const handleDelete = async () => {
 }
 
 .modal-content {
-    background-color: white;
-    border-radius: 12px;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    background-color: var(--color-bg-2);
+    border-radius: var(--size-border-radius-lg);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--color-border);
     max-width: 500px;
     width: 90%;
     max-height: 80vh;
@@ -185,13 +186,13 @@ const handleDelete = async () => {
     align-items: center;
     justify-content: space-between;
     padding: 1.5rem;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--color-border);
 }
 
 .modal-header h3 {
     margin: 0;
     font-size: 1.25rem;
-    color: #1e293b;
+    color: var(--color-text-primary);
     word-break: break-word;
 }
 
@@ -203,14 +204,14 @@ const handleDelete = async () => {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #64748b;
-    transition: color 0.2s;
+    color: var(--color-text-secondary);
+    transition: color var(--transition-base);
     flex-shrink: 0;
     margin-left: 1rem;
 }
 
 .close-button:hover {
-    color: #1e293b;
+    color: var(--color-text-primary);
 }
 
 .modal-body {
@@ -220,12 +221,12 @@ const handleDelete = async () => {
 .document-info {
     margin: 0;
     font-size: 0.9rem;
-    color: #475569;
+    color: var(--color-text-secondary);
 }
 
 .info-value {
     font-weight: 600;
-    color: #1e293b;
+    color: var(--color-text-primary);
     word-break: break-word;
 }
 
@@ -234,7 +235,7 @@ const handleDelete = async () => {
     flex-direction: column;
     gap: 0.75rem;
     padding: 1.5rem;
-    border-top: 1px solid #e2e8f0;
+    border-top: 1px solid var(--color-border);
 }
 
 .action-button {
@@ -243,11 +244,11 @@ const handleDelete = async () => {
     justify-content: center;
     gap: 0.5rem;
     padding: 0.75rem 1rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--size-border-radius);
     font-size: 0.95rem;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all var(--transition-base);
     font-weight: 500;
 }
 
@@ -257,44 +258,47 @@ const handleDelete = async () => {
 }
 
 .download-file {
-    color: #2563eb;
-    border-color: #bfdbfe;
-    background-color: #eff6ff;
+    color: var(--color-info-text);
+    border-color: var(--color-info-border);
+    background-color: var(--color-info-bg);
 }
 
 .download-file:hover:not(:disabled) {
-    background-color: #dbeafe;
-    border-color: #93c5fd;
+    background-color: var(--color-info-bg);
+    border-color: var(--color-info-border);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
 .download-embeddings {
-    color: #8b5cf6;
-    border-color: #ddd6fe;
-    background-color: #f5f3ff;
+    color: var(--color-primary-light);
+    border-color: var(--color-primary-light);
+    background-color: var(--color-success-bg);
 }
 
 .download-embeddings:hover:not(:disabled) {
-    background-color: #ede9fe;
-    border-color: #c4b5fd;
+    background-color: var(--color-success-bg);
+    border-color: var(--color-primary-light);
+    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.1);
 }
 
 .delete-file {
-    color: #dc2626;
-    border-color: #fecaca;
-    background-color: #fef2f2;
+    color: var(--color-error-text);
+    border-color: var(--color-error-border);
+    background-color: var(--color-error-bg);
 }
 
 .delete-file:hover:not(:disabled) {
-    background-color: #fee2e2;
-    border-color: #fca5a5;
+    background-color: var(--color-error-bg);
+    border-color: var(--color-error-border);
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1);
 }
 
 .error-message {
     padding: 0.75rem 1.5rem 1.5rem 1.5rem;
-    background-color: #fef2f2;
-    border: 1px solid #fecaca;
-    border-radius: 6px;
-    color: #dc2626;
+    background-color: var(--color-error-bg);
+    border: 1px solid var(--color-error-border);
+    border-radius: var(--size-border-radius);
+    color: var(--color-error-text);
     font-size: 0.9rem;
     margin: 0 1.5rem 1.5rem 1.5rem;
 }
