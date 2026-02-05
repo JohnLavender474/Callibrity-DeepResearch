@@ -143,7 +143,7 @@ async def check_stop_request_exists(
 
 async def delete_stop_request(
     invocation_id: str,
-):
+) -> bool:
     url = f"{DATABASE_SERVICE_URL}/invocation-stop-requests/{invocation_id}"
 
     try:

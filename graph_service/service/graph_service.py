@@ -29,10 +29,10 @@ logger = logging.getLogger(__name__)
 
 HEARTBEAT_INTERVAL = 30
 
-MAX_TIME_THRESHOLD_PER_NODE = 1200
+MAX_TIME_THRESHOLD_PER_NODE = 2500
 
 STOP_SIGNAL_POLL_INTERVAL = 5.0
-STOP_SIGNAL_TOTAL_WAIT_TIME = 1200
+STOP_SIGNAL_TOTAL_WAIT_TIME = 2500
 
 
 async def stream_graph(
@@ -383,12 +383,18 @@ async def stream_graph(
 
     finally:
         try:
-            await invocations_service.delete_stop_request(
+            deleted_stop_req = await invocations_service.delete_stop_request(
                 invocation_id=invocation_id,
             )
-            logger.debug(
-                f"Deleted stop request for invocation {invocation_id}"
-            )
+
+            if deleted_stop_req:
+                logger.debug(
+                    f"Deleted stop request for invocation {invocation_id}"
+                )
+            else:
+                logger.debug(
+                    f"No stop request deleted for invocation {invocation_id}"
+                )
         except Exception as e:
             logger.debug(
                 f"No stop request was deleted for invocation {invocation_id}: {str(e)}"

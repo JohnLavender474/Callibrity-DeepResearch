@@ -6,6 +6,16 @@ from langchain_core.messages import BaseMessage
 from config import CLAUDE_API_KEY
 
 
+# Claude model configuration constants.
+# These can be turned into env vars later if needed.
+# It may also be worth exposing configurations to the
+# invokers so that each graph node can have different settings.
+
+CLAUDE_MODEL = "claude-opus-4-5"
+CLAUDE_TEMPERATURE = 0.5
+CLAUDE_MAX_TOKENS = 64000
+
+
 T = TypeVar("T")
 
 
@@ -13,11 +23,12 @@ class ClaudeClientWrapper:
 
     def __init__(self):
         self._client = ChatAnthropic(
-            model="claude-opus-4-5",
+            model=CLAUDE_MODEL,
             api_key=CLAUDE_API_KEY,
-            temperature=0,
-            max_tokens=16384,
+            temperature=CLAUDE_TEMPERATURE,
+            max_tokens=CLAUDE_MAX_TOKENS,
         )
+
 
     @overload
     async def ainvoke(
@@ -27,6 +38,7 @@ class ClaudeClientWrapper:
     ) -> Any:
         ...
 
+
     @overload
     async def ainvoke(
         self,
@@ -34,6 +46,7 @@ class ClaudeClientWrapper:
         output_type: Type[T] = ...,
     ) -> T:
         ...
+
 
     async def ainvoke(
         self,

@@ -48,7 +48,7 @@ async def check_stop_request_exists(
 
 async def delete_stop_request(
     invocation_id: str,
-):
+) -> bool:
     return await database_client.delete_stop_request(
         invocation_id=invocation_id,
     )
