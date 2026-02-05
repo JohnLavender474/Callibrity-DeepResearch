@@ -203,6 +203,27 @@ watch(() => props.isOpen, (newValue) => {
   color: #666;
 }
 
+.markdown-content :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.95rem;
+  display: block;
+  overflow-x: auto;
+}
+
+.markdown-content :deep(th),
+.markdown-content :deep(td) {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border);
+  vertical-align: top;
+}
+
+.markdown-content :deep(th) {
+  font-weight: 600;  
+}
+
 .modal-footer {
   display: flex;
   align-items: center;
