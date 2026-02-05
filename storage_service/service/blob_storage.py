@@ -83,6 +83,21 @@ class BlobStorage:
         return True
 
 
+    def blob_exists_in_collection(
+        self,
+        collection_name: str,
+        filename: str
+    ) -> bool:
+        blob_path = self.storage_path / collection_name / filename
+        exists = blob_path.exists()
+
+        logger.debug(
+            f"Blob exists check: collection='{collection_name}', "
+            f"filename='{filename}', exists='{exists}'"
+        )
+        return exists
+
+
     def delete_collection(self, collection_name: str) -> bool:
         collection_dir = self.storage_path / collection_name
 

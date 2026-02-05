@@ -13,7 +13,7 @@ from fastapi import (
 from fastapi.responses import Response
 
 from service.blob_storage import BlobStorage
-from config.vars import DATABASE_SERVICE_URL, EMBEDDING_SERVICE_URL
+from config.vars import DATABASE_SERVICE_URL
 
 
 logger = logging.getLogger(__name__)
@@ -61,6 +61,22 @@ async def upload_blob(
 
     temp_file_path = None
     try:
+        if blob_storage.blob_exists_in_collection(
+            collection_name=collection_name,
+            filename=file.filename
+        ):
+            logger.warning(
+                f"Blob already exists: collection='{collection_name}', "
+                f"filename='{file.filename}'"
+            )
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    f"Blob '{file.filename}' already exists in "
+                    f"collection '{collection_name}'."
+                )
+            )
+
         with tempfile.NamedTemporaryFile(
             delete=False,
             suffix=os.path.splitext(file.filename)[1]

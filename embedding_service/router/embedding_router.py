@@ -180,6 +180,23 @@ async def upload_document(
             detail=f"Collection '{collection_name}' does not exist"
         )
 
+    existing_count = vector_client.count_points_by_source(
+        collection_name,
+        file.filename
+    )
+    if existing_count > 0:
+        logger.warning(
+            f"Document '{file.filename}' already exists in "
+            f"collection '{collection_name}'"
+        )
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                f"Document '{file.filename}' already exists in "
+                f"collection '{collection_name}'. Use PUT to replace it."
+            )
+        )
+
     with tempfile.NamedTemporaryFile(
         delete=False,
         suffix=os.path.splitext(file.filename)[1]
