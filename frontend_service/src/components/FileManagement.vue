@@ -23,23 +23,23 @@
                     />
                 </button>
             </div>
-            <div v-if="loadingDocuments && uploadedFiles.length === 0" class="loading-container">
+            <div v-if="loadingDocuments && uploadedFiles.size === 0" class="loading-container">
                 <div class="spinner"></div>
                 <span>Loading documents...</span>
             </div>
             <ul v-else>
                 <li
-                    v-for="file in uploadedFiles"
+                    v-for="file in Array.from(uploadedFiles.values())"
                     :key="file.filename"
                     @click="openDocumentModal(file)"
                     class="document-row"
                 >
                     <span class="file-name">{{ file.filename }}</span>
                 </li>
-                <li v-if="uploadedFiles.length === 0" class="no-documents">
+                <li v-if="uploadedFiles.size === 0" class="no-documents">
                     No documents uploaded yet
                 </li>
-                <li v-if="loadingDocuments && uploadedFiles.length > 0" class="loading-more">
+                <li v-if="loadingDocuments && uploadedFiles.size > 0" class="loading-more">
                     <div class="spinner-small"></div>
                     <span>Loading more documents...</span>
                 </li>
@@ -90,7 +90,7 @@ const emit = defineEmits<{
     (e: 'file-uploaded', filename: string): void
 }>()
 
-const uploadedFiles = ref<FileInfo[]>([])
+const uploadedFiles = ref<Map<string, FileInfo>>(new Map())
 const loadingDocuments = ref(false)
 
 const errorMessage = ref('')
@@ -107,23 +107,25 @@ const loadUploadedFiles = async (profileId: string) => {
     console.debug('Loading documents for profile:', profileId)
 
     if (!profileId) {
-        uploadedFiles.value = []
+        uploadedFiles.value = new Map()
         loadingDocuments.value = false
         throw new Error('Profile ID is required to load documents')
     }
 
     loadingDocuments.value = true
-    uploadedFiles.value = []
+    uploadedFiles.value = new Map()
     
     errorMessage.value = ''    
 
     try {
         await fetchFilesForProfile(profileId, (batchFiles: FileInfo[]) => {
-            uploadedFiles.value = [...uploadedFiles.value, ...batchFiles]
+            batchFiles.forEach(file => {
+                uploadedFiles.value.set(file.filename, file)
+            })
         })
     } catch (error) {
         console.error('Failed to load documents:', error)
-        uploadedFiles.value = []
+        uploadedFiles.value = new Map()
         errorMessage.value = 'Failed to load documents. Please try again.'
     } finally {
         loadingDocuments.value = false
@@ -138,10 +140,7 @@ const handleFile = async (file: File) => {
         return
     }
 
-    const existingFile = uploadedFiles.value.find(
-        (f) => f.filename === file.name
-    )
-    if (existingFile) {
+    if (uploadedFiles.value.has(file.name)) {
         errorMessage.value = 'A file with this name already exists'
         return
     }
@@ -213,10 +212,7 @@ const handleSplitConfirmed = async (pagesPerPart: number) => {
         )
 
         for (const part of parts) {
-            const existingFile = uploadedFiles.value.find(
-                (f) => f.filename === part.file.name
-            )
-            if (existingFile) {
+            if (uploadedFiles.value.has(part.file.name)) {
                 addToast(
                     `Skipping ${part.file.name} (already exists)`,
                     'info',
@@ -271,7 +267,7 @@ watch(
         if (newProfileId) {
             loadUploadedFiles(newProfileId)           
         } else {            
-            uploadedFiles.value = []
+            uploadedFiles.value = new Map()
         }
     },
     { immediate: true }
