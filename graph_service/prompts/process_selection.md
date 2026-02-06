@@ -60,4 +60,8 @@ beneficial, and how the conversation history may
 skew the selection.
 
 Respond with the selected process type and your
-reasoning.
+reasoning. Do not make reference to the other process
+types in your explanation. Do not reference the 
+chosen process type by its exact name, i.e. "parallel_tasks". 
+Instead, describe the approach in a way that conveys the 
+concept without naming it directly.
