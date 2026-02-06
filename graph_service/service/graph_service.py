@@ -3,7 +3,6 @@ import json
 import asyncio
 import time
 import httpx
-import os
 
 from typing import Optional
 
@@ -11,7 +10,6 @@ from langchain_core.messages import (
     BaseMessage,
     HumanMessage,
     AIMessage,
-    SystemMessage,
 )
 from langgraph.graph.state import CompiledStateGraph
 
@@ -20,7 +18,9 @@ from model.graph_input import GraphInput
 from model.graph_state import GraphState
 from model.process_selection import ProcessSelectionOutput
 from utils.stop_signal_waiter import StopSignalWaiter
-from exception.invocation_stopped_exception import DeepResearchInvocationStoppedException
+from exception.invocation_stopped_exception import (
+    DeepResearchInvocationStoppedException
+)
 from service import invocations_service
 from llm.claude_client import ClaudeClientWrapper
 from config import EMBEDDING_SERVICE_URL
@@ -36,10 +36,10 @@ logger = logging.getLogger(__name__)
 
 HEARTBEAT_INTERVAL = 30
 
-MAX_TIME_THRESHOLD_PER_NODE = 2500
+MAX_TIME_THRESHOLD_PER_NODE = 3600
 
 STOP_SIGNAL_POLL_INTERVAL = 5.0
-STOP_SIGNAL_TOTAL_WAIT_TIME = 2500
+STOP_SIGNAL_TOTAL_WAIT_TIME = MAX_TIME_THRESHOLD_PER_NODE
 
 CHAT_HISTORY_MAX_RECENT_MESSAGES = 4
 CHAT_HISTORY_MAX_RETRIEVED_CONTEXT_MESSAGES = 5
@@ -152,7 +152,7 @@ async def _prepare_graph_messages(
                 logger.debug("Generating context summary with LLM")
                 
                 summary_response = await llm_client.ainvoke(
-                    input=[SystemMessage(content=summarization_prompt)]
+                    input=[HumanMessage(content=summarization_prompt)]
                 )
                 
                 summary_content = summary_response.content
@@ -228,6 +228,26 @@ async def stream_graph(
         }
         yield f"data: {json.dumps(event_data)}\n\n"
 
+        # Create invocation record in database early
+
+        try:
+            created_invocation = await invocations_service.create_invocation(
+                profile_id=input_data.profile_id,
+                invocation_id=invocation_id,
+                user_query=input_data.user_query,
+                status="running",
+                graph_state={},
+            )
+            logger.info(
+                f"Created database record for invocation {invocation_id} "
+                f"with status: {created_invocation.get('status')}"
+            )
+        except Exception as e:
+            logger.error(
+                f"Failed to create invocation in database: {str(e)}"
+            )
+            raise
+
         # Prepare graph messages to be included in the graph invocation
 
         graph_state_messages = await _prepare_graph_messages(
@@ -250,25 +270,18 @@ async def stream_graph(
                 reasoning="User-selected process override",
             )
 
-        # Create invocation record in database
+        # Update invocation with initial graph state
 
         try:
-            created_invocation = await invocations_service.create_invocation(
+            await invocations_service.update_invocation(
                 profile_id=input_data.profile_id,
                 invocation_id=invocation_id,
-                user_query=input_data.user_query,
-                status="running",
                 graph_state=graph_state.model_dump(),
             )
-            logger.info(
-                f"Created database record for invocation {invocation_id} "
-                f"with status: {created_invocation.get('status')}"
-            )
         except Exception as e:
-            logger.error(
-                f"Failed to create invocation in database: {str(e)}"
+            logger.warning(
+                f"Failed to update invocation with initial graph state: {str(e)}"
             )
-            raise
 
         # Build the graph and instantiate a streaming coroutine.
         # If the input data specifies a custom start node, then
