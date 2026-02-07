@@ -62,7 +62,7 @@ async def invoke_graph(
     )
 
 
-@router.delete("/{invocation_id}/stop")
+@router.post("/{invocation_id}/stop")
 async def stop_invocation(
     invocation_id: str,
 ):
@@ -72,7 +72,7 @@ async def stop_invocation(
     
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.delete(
+            response = await client.post(
                 f"{DATABASE_SERVICE_URL}/invocation-stop-requests/{invocation_id}"
             )
             
