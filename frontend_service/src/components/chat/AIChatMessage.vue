@@ -48,187 +48,175 @@
         </div>
       </CollapsibleSection>
 
-      <CollapsibleSection
-        v-else
-        title="Graph Execution"
-        :badge="stepCountBadge"
-        :defaultExpanded="false"
-      >
-        <div class="steps-container">
-          <div 
-            v-if="content.steps.length === 0" 
-            class="no-steps"
-          >
-            <template v-if="isLoading">
-              <div class="spinner-small"></div>
-              <span>Starting...</span>
-            </template>
-            <template v-else>
-              No steps recorded
-            </template>
-          </div>
-
-          <template
-            v-for="(step, index) in content.steps"
-            :key="index"
-          >
-            <div 
-              v-if="isExpandableStep(step.type)"
-              class="step-item-expandable"
-            >
-              <CollapsibleSection
-                :title="getStepDisplayText(step)"
-                :badge="getStepBadge(step)"
-                :defaultExpanded="false"
-                :markdownBackground="isSimpleProcessStep(step.type) || isReviewStep(step.type) || isSummaryStep(step.type)"
-              >
-                <div v-if="isTaskStep(step.type)" class="tasks-container">
-                  <div 
-                    v-for="(taskEntry, taskIndex) in getTaskEntries(step)"
-                    :key="taskIndex"
-                    class="task-entry"
-                  >
-                    <div class="task-header">
-                      <span class="task-icon">{{ taskEntry.success ? '✅' : '❌' }}</span>
-                      <span class="task-text">{{ taskEntry.task }}</span>
-                    </div>
-                    
-                    <CollapsibleSection
-                      v-if="taskEntry.result || (taskEntry.citations && taskEntry.citations.length > 0)"
-                      title="Details"
-                      :defaultExpanded="false"
-                      :markdownBackground="true"
-                    >
-                      <div v-if="taskEntry.result" class="task-result">
-                        <div class="markdown-header">
-                          <button
-                            class="icon-button"
-                            @click="openModal(`Task: ${taskEntry.task}`, taskEntry.result)"
-                            title="View in modal"
-                          >
-                            <Maximize2 :size="16" />
-                          </button>
-                          <button
-                            class="icon-button"
-                            @click="copyToClipboard(taskEntry.result, `task-${index}-${taskIndex}`)"
-                            :title="copiedStates[`task-${index}-${taskIndex}`] ? 'Copied!' : 'Copy to clipboard'"
-                          >
-                            <Check v-if="copiedStates[`task-${index}-${taskIndex}`]" :size="16" />
-                            <Copy v-else :size="16" />
-                          </button>
-                        </div>
-                        <div class="task-result-content markdown-content" v-html="renderMarkdown(taskEntry.result)"></div>
-                      </div>                      
-                    </CollapsibleSection>                    
-                    <CollapsibleSection
-                        v-if="taskEntry.citations && taskEntry.citations.length > 0"
-                        title="Citations"
-                        :defaultExpanded="false"
-                      >
-                        <div class="citations-container">
-                          <div class="citation-bubbles">
-                            <button
-                              v-for="(citation, citIndex) in taskEntry.citations"
-                              :key="citIndex"
-                              class="citation-bubble"
-                              :title="citation.filename"
-                              @click="openPdfAtPage(step, citation)"
-                            >
-                              <span class="citation-filename">{{ truncateFilename(citation.filename) }}</span>
-                              <span class="citation-page">p.{{ citation.page_number }}</span>
-                            </button>
-                          </div>
-                        </div>
-                      </CollapsibleSection>
-                  </div>
-                </div>
-
-                <div v-else-if="isProcessSelectionStep(step.type)" class="step-content">
-                  <div class="content-item">
-                    <span class="content-label">Selected Process:</span>
-                    <span class="content-value">{{ formatNodeName(step.details?.output?.process_type || 'unknown') }}</span>
-                  </div>
-                  <div class="content-item">
-                    <span class="content-label">Reasoning:</span>
-                    <p class="content-text">{{ step.details?.output?.reasoning || 'No reasoning provided' }}</p>
-                  </div>
-                </div>
-
-                <div v-else-if="isSimpleProcessStep(step.type)" class="step-content">
-                  <div class="markdown-header">
-                    <button
-                      class="icon-button"
-                      @click="openModal('Direct Response', step.details?.output?.result || '')"
-                      title="View in modal"
-                    >
-                      <Maximize2 :size="16" />
-                    </button>
-                    <button
-                      class="icon-button"
-                      @click="copyToClipboard(step.details?.output?.result || '', `simple-process-${index}`)"
-                      :title="copiedStates[`simple-process-${index}`] ? 'Copied!' : 'Copy to clipboard'"
-                    >
-                      <Check v-if="copiedStates[`simple-process-${index}`]" :size="16" />
-                      <Copy v-else :size="16" />
-                    </button>
-                  </div>
-                  <div class="markdown-content" v-html="renderMarkdown(step.details?.output?.result || '')"></div>
-                </div>
-
-                <div v-else-if="isReviewStep(step.type)" class="step-content">
-                  <div class="markdown-header">
-                    <button
-                      class="icon-button"
-                      @click="openModal('Research Review', step.details?.output?.review || '')"
-                      title="View in modal"
-                    >
-                      <Maximize2 :size="16" />
-                    </button>
-                    <button
-                      class="icon-button"
-                      @click="copyToClipboard(step.details?.output?.review || '', `review-${index}`)"
-                      :title="copiedStates[`review-${index}`] ? 'Copied!' : 'Copy to clipboard'"
-                    >
-                      <Check v-if="copiedStates[`review-${index}`]" :size="16" />
-                      <Copy v-else :size="16" />
-                    </button>
-                  </div>
-                  <div class="markdown-content" v-html="renderMarkdown(step.details?.output?.review || '')"></div>
-                </div>
-
-                <div v-else-if="isSummaryStep(step.type)" class="step-content">
-                  <div class="markdown-header">
-                    <button
-                      class="icon-button"
-                      @click="openModal('Final Summary', content.final_result || '')"
-                      title="View in modal"
-                    >
-                      <Maximize2 :size="16" />
-                    </button>
-                    <button
-                      class="icon-button"
-                      @click="copyToClipboard(content.final_result || '', 'final-summary')"
-                      :title="copiedStates['final-summary'] ? 'Copied!' : 'Copy to clipboard'"
-                    >
-                      <Check v-if="copiedStates['final-summary']" :size="16" />
-                      <Copy v-else :size="16" />
-                    </button>
-                  </div>
-                  <div class="markdown-content summary-content" v-html="renderMarkdown(content.final_result || '')"></div>
-                </div>
-              </CollapsibleSection>
-            </div>
-
-            <div 
-              v-else
-              class="step-item"
-            >
-              <span class="step-icon">{{ getStepIcon(step.type) }}</span>
-              <span class="step-text">{{ getStepDisplayText(step) }}</span>
-            </div>
+      <template v-else>
+        <div 
+          v-if="content.steps.length === 0" 
+          class="no-steps"
+        >
+          <template v-if="isLoading">
+            <div class="spinner-small"></div>
+            <span>Starting...</span>
+          </template>
+          <template v-else>
+            No steps recorded
           </template>
         </div>
-      </CollapsibleSection>      
+
+        <template
+          v-for="(step, index) in content.steps"
+          :key="index"
+        >
+          <CollapsibleSection
+            v-if="isExpandableStep(step.type)"
+            :title="getStepDisplayText(step)"
+            :badge="getStepBadge(step)"
+            :defaultExpanded="false"
+            :markdownBackground="isSimpleProcessStep(step.type) || isReviewStep(step.type) || isSummaryStep(step.type)"
+          >
+            <div v-if="isTaskStep(step.type)" class="tasks-container">
+              <div 
+                v-for="(taskEntry, taskIndex) in getTaskEntries(step)"
+                :key="taskIndex"
+                class="task-entry"
+              >
+                <div class="task-header">
+                  <span class="task-icon">{{ taskEntry.success ? '✅' : '❌' }}</span>
+                  <span class="task-text">{{ taskEntry.task }}</span>
+                </div>
+                
+                <CollapsibleSection
+                  v-if="taskEntry.result || (taskEntry.citations && taskEntry.citations.length > 0)"
+                  title="Details"
+                  :defaultExpanded="false"
+                  :markdownBackground="true"
+                >
+                  <div v-if="taskEntry.result" class="task-result">
+                    <div class="markdown-header">
+                      <button
+                        class="icon-button"
+                        @click="openModal(`Task: ${taskEntry.task}`, taskEntry.result)"
+                        title="View in modal"
+                      >
+                        <Maximize2 :size="16" />
+                      </button>
+                      <button
+                        class="icon-button"
+                        @click="copyToClipboard(taskEntry.result, `task-${index}-${taskIndex}`)"
+                        :title="copiedStates[`task-${index}-${taskIndex}`] ? 'Copied!' : 'Copy to clipboard'"
+                      >
+                        <Check v-if="copiedStates[`task-${index}-${taskIndex}`]" :size="16" />
+                        <Copy v-else :size="16" />
+                      </button>
+                    </div>
+                    <div class="task-result-content markdown-content" v-html="renderMarkdown(taskEntry.result)"></div>
+                  </div>                      
+                </CollapsibleSection>                    
+                <CollapsibleSection
+                    v-if="taskEntry.citations && taskEntry.citations.length > 0"
+                    title="Citations"
+                    :defaultExpanded="false"
+                  >
+                    <div class="citations-container">
+                      <div class="citation-bubbles">
+                        <button
+                          v-for="(citation, citIndex) in taskEntry.citations"
+                          :key="citIndex"
+                          class="citation-bubble"
+                          :title="citation.filename"
+                          @click="openPdfAtPage(step, citation)"
+                        >
+                          <span class="citation-filename">{{ truncateFilename(citation.filename) }}</span>
+                          <span class="citation-page">p.{{ citation.page_number }}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </CollapsibleSection>
+              </div>
+            </div>
+
+            <div v-else-if="isProcessSelectionStep(step.type)" class="step-content">
+              <div class="content-item">
+                <span class="content-label">Selected Process:</span>
+                <span class="content-value">{{ formatNodeName(step.details?.output?.process_type || 'unknown') }}</span>
+              </div>
+              <div class="content-item">
+                <span class="content-label">Reasoning:</span>
+                <p class="content-text">{{ step.details?.output?.reasoning || 'No reasoning provided' }}</p>
+              </div>
+            </div>
+
+            <div v-else-if="isSimpleProcessStep(step.type)" class="step-content">
+              <div class="markdown-header">
+                <button
+                  class="icon-button"
+                  @click="openModal('Direct Response', step.details?.output?.result || '')"
+                  title="View in modal"
+                >
+                  <Maximize2 :size="16" />
+                </button>
+                <button
+                  class="icon-button"
+                  @click="copyToClipboard(step.details?.output?.result || '', `simple-process-${index}`)"
+                  :title="copiedStates[`simple-process-${index}`] ? 'Copied!' : 'Copy to clipboard'"
+                >
+                  <Check v-if="copiedStates[`simple-process-${index}`]" :size="16" />
+                  <Copy v-else :size="16" />
+                </button>
+              </div>
+              <div class="markdown-content" v-html="renderMarkdown(step.details?.output?.result || '')"></div>
+            </div>
+
+            <div v-else-if="isReviewStep(step.type)" class="step-content">
+              <div class="markdown-header">
+                <button
+                  class="icon-button"
+                  @click="openModal('Research Review', step.details?.output?.review || '')"
+                  title="View in modal"
+                >
+                  <Maximize2 :size="16" />
+                </button>
+                <button
+                  class="icon-button"
+                  @click="copyToClipboard(step.details?.output?.review || '', `review-${index}`)"
+                  :title="copiedStates[`review-${index}`] ? 'Copied!' : 'Copy to clipboard'"
+                >
+                  <Check v-if="copiedStates[`review-${index}`]" :size="16" />
+                  <Copy v-else :size="16" />
+                </button>
+              </div>
+              <div class="markdown-content" v-html="renderMarkdown(step.details?.output?.review || '')"></div>
+            </div>
+          </CollapsibleSection>         
+        </template>
+      </template>
+
+      <CollapsibleSection
+        v-if="content.final_result"
+        title="Final Summary"
+        :defaultExpanded="true"
+        :markdownBackground="true"
+      >
+        <div class="summary-container">
+          <div class="markdown-header">
+            <button
+              class="icon-button"
+              @click="openModal('Final Summary', content.final_result || '')"
+              title="View in modal"
+            >
+              <Maximize2 :size="16" />
+            </button>
+            <button
+              class="icon-button"
+              @click="copyToClipboard(content.final_result || '', 'final-summary')"
+              :title="copiedStates['final-summary'] ? 'Copied!' : 'Copy to clipboard'"
+            >
+              <Check v-if="copiedStates['final-summary']" :size="16" />
+              <Copy v-else :size="16" />
+            </button>
+          </div>
+          <div class="markdown-content summary-content" v-html="renderMarkdown(content.final_result || '')"></div>
+        </div>
+      </CollapsibleSection>
     </div>
   </div>
 </template>
@@ -280,14 +268,6 @@ const copyToClipboard = async (text: string, key: string) => {
   }
 }
 
-const formatTime = (date: Date): string => {
-  return date.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true,
-  })
-}
-
 const isLoading = computed(() => {
   return props.content.status === 'running'
 })
@@ -309,11 +289,6 @@ const statusLabel = computed(() => {
     error: 'Error',
   }
   return labels[props.content.status] || 'Unknown'
-})
-
-const stepCountBadge = computed(() => {
-  const count = props.content.steps.length
-  return count === 1 ? '1 step' : `${count} steps`
 })
 
 const formatNodeName = (nodeName: string): string => {
@@ -347,7 +322,6 @@ const isExpandableStep = (stepType: string): boolean => {
   return isTaskStep(stepType) || 
     isProcessSelectionStep(stepType) || 
     isReviewStep(stepType) || 
-    isSummaryStep(stepType) || 
     isSimpleProcessStep(stepType)
 }
 
@@ -388,34 +362,6 @@ const openPdfAtPage = (step: GraphStep, citation: TaskCitation): void => {
   
   const url = `/api/storage/collections/${profileId}/blobs/${encodeURIComponent(filename)}#page=${pageNumber}`
   window.open(url, '_blank')
-}
-
-const getStepIcon = (stepType: string): string => {
-  if (stepType === 'process_selection') {
-    return '🎯'
-  }
-
-  if (stepType === 'simple_process') {
-    return '💬'
-  }
-
-  if (stepType === 'parallel_tasks') {
-    return '⚡'
-  }
-
-  if (stepType === 'sequential_tasks') {
-    return '📋'
-  }
-
-  if (stepType === 'perform_review') {
-    return '🔍'
-  }
-
-  if (stepType === 'generate_summary') {
-    return '📝'
-  }
-
-  return '✓'
 }
 
 const getStepDisplayText = (step: GraphStep): string => {
@@ -514,12 +460,6 @@ const renderMarkdown = (markdown: string) => {
   gap: 1rem;
 }
 
-.steps-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
 .no-steps {
   display: flex;
   align-items: center;
@@ -543,22 +483,11 @@ const renderMarkdown = (markdown: string) => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid var(--color-border);
+  padding: 0.75rem;
+  background-color: var(--color-bg-2);
+  border-radius: var(--size-border-radius-sm);
   font-size: 0.9rem;
   color: var(--color-text-secondary);
-}
-
-.step-item:last-child {
-  border-bottom: none;
-}
-
-.step-item-expandable {
-  border-bottom: 1px solid var(--color-border);
-}
-
-.step-item-expandable:last-child {
-  border-bottom: none;
 }
 
 .step-icon {
@@ -608,6 +537,10 @@ const renderMarkdown = (markdown: string) => {
 }
 
 
+
+.summary-container {
+  padding: 0.5rem;
+}
 
 .summary-content {
   max-height: 400px;
@@ -674,10 +607,17 @@ const renderMarkdown = (markdown: string) => {
   transform: scale(0.95);
 }
 
+.markdown-content {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
 .task-result-content {
   font-size: 0.875rem;
   line-height: 1.6;
   color: black;
+  max-height: 400px;
+  overflow-y: auto;
 }
 
 .citations-container {
