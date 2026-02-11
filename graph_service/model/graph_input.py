@@ -12,4 +12,4 @@ class GraphInput(BaseModel):
     messages: list[RawChatMessage] = []
     custom_start_node: Optional[str] = None
     process_override: Optional[ProcessType] = None
-    model_selection: Optional[ModelType] = None
+    model_selection: Optional[ModelType] = None    
