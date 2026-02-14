@@ -5,6 +5,7 @@ from langchain_core.messages import BaseMessage
 
 from model.process_selection import ProcessSelectionOutput
 from model.task import TaskEntry
+from model.execution_config import ExecutionConfig
 
 
 class GraphStep(BaseModel):
@@ -21,4 +22,4 @@ class GraphState(BaseModel):
     task_entries: list[TaskEntry] = []
     review: str = ""
     current_result: str = ""
-    model_selection: Optional[str] = None   
+    execution_config: ExecutionConfig = ExecutionConfig.default()

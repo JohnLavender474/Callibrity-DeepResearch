@@ -464,8 +464,18 @@ export function useChatSession() {
           user_query: request.query,
           profile_id: profileId,
           messages: chatHistory,
-          process_override: request.processOverride,
-          model_selection: request.modelSelection,
+          execution_config: request.executionConfig
+            ? {
+                process_override: request.executionConfig.processOverride,
+                model_selection: request.executionConfig.modelSelection,
+                allow_general_knowledge_fallback:
+                  request.executionConfig.allowGeneralKnowledgeFallback,
+                allow_web_search:
+                  request.executionConfig.allowWebSearch,
+                temperature: request.executionConfig.temperature,
+                reasoning_level: request.executionConfig.reasoningLevel,
+              }
+            : undefined,
         },
         currentAbortController.signal,
       );

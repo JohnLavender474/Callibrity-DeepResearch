@@ -260,8 +260,7 @@ const onConversationSelected = (conversationId: string) => {
     closeLeftSidebar()
 
     if (chatSectionRef.value) {
-      chatSectionRef.value.resetProcessSelection()
-      chatSectionRef.value.resetModelSelection()
+      chatSectionRef.value.resetExecutionConfig()
     }
   }
 }
@@ -284,8 +283,7 @@ const onNewConversation = () => {
 
   if (chatSectionRef.value) {
     chatSectionRef.value.focusInput()
-    chatSectionRef.value.resetProcessSelection()
-    chatSectionRef.value.resetModelSelection()
+    chatSectionRef.value.resetExecutionConfig()
   }
 }
 

@@ -66,9 +66,7 @@ watch(
   }
 )
 
-const onSubmit = async (
-  request: UserQueryRequest,
-) => {
+const onSubmit = (request: UserQueryRequest) => {
   emit('submit', request)
 }
 
@@ -80,18 +78,13 @@ const focusInput = () => {
   userInputRef.value?.focus()
 }
 
-const resetProcessSelection = () => {
-  userInputRef.value?.resetProcessType()
-}
-
-const resetModelSelection = () => {
-  userInputRef.value?.resetModelType()
+const resetExecutionConfig = () => {
+  userInputRef.value?.resetExecutionConfig()
 }
 
 defineExpose({
   focusInput,
-  resetProcessSelection,
-  resetModelSelection,
+  resetExecutionConfig,
 })
 </script>
 

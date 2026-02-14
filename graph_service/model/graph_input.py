@@ -4,6 +4,7 @@ from typing import Optional
 from model.model_selection import ModelType
 from model.process_selection import ProcessType
 from model.raw_chat_message import RawChatMessage
+from model.execution_config import ExecutionConfig
 
 
 class GraphInput(BaseModel):
@@ -13,3 +14,4 @@ class GraphInput(BaseModel):
     custom_start_node: Optional[str] = None
     process_override: Optional[ProcessType] = None
     model_selection: Optional[ModelType] = None
+    execution_config: Optional[ExecutionConfig] = None

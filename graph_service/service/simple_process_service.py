@@ -1,10 +1,9 @@
-from langchain_core.messages import HumanMessage, SystemMessage
-
 from llm.llm_client import LLMClient
 from model.simple_process import (
     SimpleProcessInput,
     SimpleProcessOutput,
 )
+from service.rag_task_service import execute_task
 from utils.prompt_loader import load_prompt
 
 
@@ -12,21 +11,18 @@ async def execute_simple_process(
     input_data: SimpleProcessInput,
     llm_client: LLMClient,
 ) -> SimpleProcessOutput:
-    simple_process_prompt = load_prompt("simple_process.md")
+    task_execution_prompt = load_prompt("task_execution.md")
 
-    message_list = (
-        input_data.chat_history.copy()
-        if input_data.chat_history else []
-    )
-    message_list.append(
-        SystemMessage(content=simple_process_prompt),
-    )
-    message_list.append(
-        HumanMessage(content=input_data.query),
+    task_entry = await execute_task(
+        task=input_data.query,
+        prompt=task_execution_prompt,
+        collection_name=input_data.collection_name,
+        llm_client=llm_client,
+        execution_config=input_data.execution_config,
+        chat_history=input_data.chat_history,
     )
 
-    response = await llm_client.ainvoke(
-        message_list,
+    return SimpleProcessOutput(
+        result=task_entry.result,
+        citations=task_entry.citations,
     )
-
-    return SimpleProcessOutput(result=response.content)

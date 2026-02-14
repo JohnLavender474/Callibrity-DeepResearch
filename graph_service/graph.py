@@ -61,7 +61,7 @@ async def node_process_selection(state: GraphState) -> GraphState:
 
         output = state.process_selection
     else:
-        llm_client = get_llm(state.model_selection)
+        llm_client = get_llm(state.execution_config.model_selection)
         output = await select_process(
             input_data,
             llm_client=llm_client,
@@ -89,10 +89,12 @@ async def node_simple_process(state: GraphState) -> GraphState:
     logger.debug("Starting simple process node")
     input_data = SimpleProcessInput(
         query=state.user_query,
+        collection_name=state.profile_id,
+        execution_config=state.execution_config,
         chat_history=state.messages,
     )
 
-    llm_client = get_llm(state.model_selection)
+    llm_client = get_llm(state.execution_config.model_selection)
     output = await execute_simple_process(
         input_data,
         llm_client=llm_client,
@@ -121,9 +123,10 @@ async def node_parallel_tasks(
         query=state.user_query,
         collection_name=state.profile_id,
         chat_history=state.messages,
+        execution_config=state.execution_config,
     )
     
-    llm_client = get_llm(state.model_selection)
+    llm_client = get_llm(state.execution_config.model_selection)
     output = await execute_tasks_in_parallel(
         input_data,
         llm_client=llm_client,
@@ -151,13 +154,14 @@ async def node_sequential_tasks(
     input_data = PerformResearchInput(
         query=state.user_query,
         collection_name=state.profile_id,
-        chat_history=state.messages,
+        chat_history=state.messages,        
     )
     
-    llm_client = get_llm(state.model_selection)
+    llm_client = get_llm(state.execution_config.model_selection)
     output = await execute_tasks_in_sequence(
         input_data, 
-        llm_client=llm_client,       
+        llm_client=llm_client,   
+        execution_config=state.execution_config,    
     )
     logger.debug(f"Sequential tasks output: {output.model_dump()}")
 
@@ -184,7 +188,7 @@ async def node_perform_review(
         chat_history=state.messages,
     )
     
-    llm_client = get_llm(state.model_selection)
+    llm_client = get_llm(state.execution_config.model_selection)
     output = await execute_perform_review(
         input_data,
         llm_client=llm_client,
@@ -215,7 +219,7 @@ async def node_generate_summary(
         chat_history=state.messages,
     )
     
-    llm_client = get_llm(state.model_selection)
+    llm_client = get_llm(state.execution_config.model_selection)
     output = await execute_generate_summary(
         input_data,
         llm_client=llm_client,
@@ -239,7 +243,12 @@ async def node_generate_summary(
 def route_by_process_selection(
     state: GraphState,
 ) -> Literal["simple_process", "parallel_tasks", "sequential_tasks", "end"]:
-    process_type = state.process_selection.process_type
+    process_selection = state.process_selection
+
+    if not process_selection or not process_selection.process_type:
+        raise ValueError("Process selection output is missing or invalid")
+    
+    process_type = process_selection.process_type
 
     if process_type == "simple_process":
         return "simple_process"

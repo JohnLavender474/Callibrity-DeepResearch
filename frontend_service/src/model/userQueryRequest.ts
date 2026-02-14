@@ -1,5 +1,7 @@
+import type ExecutionConfig from './executionConfig'
+
+
 export default interface UserQueryRequest {
   query: string
-  processOverride?: string
-  modelSelection?: string
+  executionConfig?: ExecutionConfig
 }

@@ -110,7 +110,8 @@
                     </div>
                     <div class="task-result-content markdown-content" v-html="renderMarkdown(taskEntry.result)"></div>
                   </div>                      
-                </CollapsibleSection>                    
+                </CollapsibleSection>   
+
                 <CollapsibleSection
                     v-if="taskEntry.citations && taskEntry.citations.length > 0"
                     title="Citations"
@@ -139,31 +140,28 @@
                 <span class="content-label">Selected Process:</span>
                 <span class="content-value">{{ formatNodeName(step.details?.output?.process_type || 'unknown') }}</span>
               </div>
+
               <div class="content-item">
                 <span class="content-label">Reasoning:</span>
                 <p class="content-text">{{ step.details?.output?.reasoning || 'No reasoning provided' }}</p>
               </div>
             </div>
 
-            <div v-else-if="isSimpleProcessStep(step.type)" class="step-content">
-              <div class="markdown-header">
-                <button
-                  class="icon-button"
-                  @click="openModal('Direct Response', step.details?.output?.result || '')"
-                  title="View in modal"
-                >
-                  <Maximize2 :size="16" />
-                </button>
-                <button
-                  class="icon-button"
-                  @click="copyToClipboard(step.details?.output?.result || '', `simple-process-${index}`)"
-                  :title="copiedStates[`simple-process-${index}`] ? 'Copied!' : 'Copy to clipboard'"
-                >
-                  <Check v-if="copiedStates[`simple-process-${index}`]" :size="16" />
-                  <Copy v-else :size="16" />
-                </button>
-              </div>
-              <div class="markdown-content" v-html="renderMarkdown(step.details?.output?.result || '')"></div>
+            <div v-else-if="isSimpleProcessStep(step.type)" class="step-content">                         
+              <div class="citations-container">
+                <div class="citation-bubbles">
+                  <button
+                    v-for="(citation, citIndex) in getSimpleProcessCitations(step)"
+                    :key="citIndex"
+                    class="citation-bubble"
+                    :title="citation.filename"
+                    @click="openPdfAtPage(step, citation)"
+                  >
+                    <span class="citation-filename">{{ truncateFilename(citation.filename) }}</span>
+                    <span class="citation-page">p.{{ citation.page_number }}</span>
+                  </button>
+                </div>
+              </div>              
             </div>
 
             <div v-else-if="isReviewStep(step.type)" class="step-content">
@@ -321,8 +319,12 @@ const isSummaryStep = (stepType: string): boolean => {
 const isExpandableStep = (stepType: string): boolean => {
   return isTaskStep(stepType) || 
     isProcessSelectionStep(stepType) || 
-    isReviewStep(stepType) || 
-    isSimpleProcessStep(stepType)
+    isSimpleProcessStep(stepType) ||
+    isReviewStep(stepType)
+}
+
+const getSimpleProcessCitations = (step: GraphStep): TaskCitation[] => {
+  return step.details?.output?.citations || []
 }
 
 const getTaskEntries = (step: GraphStep): TaskEntry[] => {
@@ -372,7 +374,7 @@ const getStepDisplayText = (step: GraphStep): string => {
   }
 
   if (stepType === 'simple_process') {
-    return 'Generated direct response'
+    return 'Gathered information to answer the query'
   }
 
   if (stepType === 'parallel_tasks') {

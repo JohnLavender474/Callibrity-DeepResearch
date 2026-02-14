@@ -1,26 +1,17 @@
 from typing import Optional
-
 from pydantic import BaseModel
+
+from model.citation import Citation
 
 
 class TaskDecomposition(BaseModel):
     tasks: list[str]
 
 
-class TaskCitation(BaseModel):
-    filename: str    
-    content_summary: str 
-    page_number: int   
-    chunk_index: int
-    collection_name: str
-    score: float
-    content: str
-
-
 class TaskResult(BaseModel):
     result: str
     reasoning: str
-    citations: list[TaskCitation] = []
+    citations: list[Citation] = []
 
 
 class TaskEntry(BaseModel):
@@ -28,4 +19,4 @@ class TaskEntry(BaseModel):
     success: bool
     result: Optional[str] = None
     reasoning: Optional[str] = None
-    citations: list[TaskCitation] = []    
+    citations: list[Citation] = []    

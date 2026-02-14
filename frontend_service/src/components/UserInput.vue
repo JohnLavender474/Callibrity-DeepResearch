@@ -8,7 +8,7 @@
         :aria-label="isCollapsed ? 'Show input' : 'Hide input'"
       >
         <svg
-          :class="{ 'rotated': !isCollapsed }"
+          :class="{ rotated: !isCollapsed }"
           xmlns="http://www.w3.org/2000/svg"
           width="20"
           height="20"
@@ -24,77 +24,67 @@
       </button>
     </div>
 
-    <form
-      v-show="!isCollapsed"
-      @submit.prevent="onSubmit"
-      class="input-form"
-    >
+    <form v-show="!isCollapsed" @submit.prevent="onSubmit" class="input-form">
       <textarea
         ref="textareaRef"
         v-model="query"
         placeholder="Enter your research query..."
         rows="4"
         :disabled="isInputDisabled"
-        @keydown.meta.enter="onSubmit"        
+        @keydown.meta.enter="onSubmit"
       ></textarea>
 
       <div class="submit-row">
-        <select
-          v-model="selectedModelType"
-          :disabled="isInputDisabled"
-          class="model-select"
-        >
-          <option value="">Default Model</option>
-          <option
-            v-for="mt in modelTypes"
-            :key="mt"
-            :value="mt"
-          >
-            {{ mt }}
-          </option>
-        </select>
-
-        <select
-          v-model="selectedProcessType"
-          :disabled="isInputDisabled"
-          class="process-select"
-        >
-          <option value="">Default Process</option>
-          <option
-            v-for="pt in processTypes"
-            :key="pt"
-            :value="pt"
-          >
-            {{ formatProcessType(pt) }}
-          </option>
-        </select>
-
         <button
-          type="submit"
-          :disabled="isInputDisabled || !isValidInput"
-        >
-          {{ submitButtonText }}
-        </button>
-
-        <button
-          v-if="props.chatStatus === 'running'"
           type="button"
-          class="stop-button"
-          @click="onStop"
+          class="config-button"
+          :disabled="isInputDisabled"
+          @click="isConfigModalOpen = true"
         >
-          Stop
+          Edit Execution Config
         </button>
+
+        <div class="submit-actions">
+          <button type="submit" :disabled="isInputDisabled || !isValidInput">
+            {{ submitButtonText }}
+          </button>
+
+          <button
+            v-if="props.chatStatus === 'running'"
+            type="button"
+            class="stop-button"
+            @click="onStop"
+          >
+            Stop
+          </button>
+        </div>
       </div>
+
+      <ExecutionConfigModal
+        :is-open="isConfigModalOpen"
+        :disabled="isInputDisabled"
+        :process-types="processTypes"
+        :model-types="modelTypes"
+        :process-type="selectedProcessType"
+        :model-type="selectedModelType"
+        :allow-general-knowledge-fallback="allowGeneralKnowledgeFallback"
+        :allow-web-search="allowWebSearch"
+        @close="isConfigModalOpen = false"
+        @update:process-type="selectedProcessType = $event"
+        @update:model-type="selectedModelType = $event"
+        @update:allow-general-knowledge-fallback="allowGeneralKnowledgeFallback = $event"
+        @update:allow-web-search="allowWebSearch = $event"
+      />
     </form>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
 
-import type UserQueryRequest from '@/model/userQueryRequest'
+import ExecutionConfigModal from '@/components/modals/ExecutionConfigModal.vue'
 import type { ChatStatus } from '@/model/chatStatus'
-
+import type UserQueryRequest from '@/model/userQueryRequest'
 
 interface UserInputProps {
   chatStatus: ChatStatus
@@ -115,16 +105,14 @@ const emit = defineEmits<{
 const query = ref('')
 const selectedProcessType = ref('')
 const selectedModelType = ref('')
+const allowGeneralKnowledgeFallback = ref(true)
+const allowWebSearch = ref(false)
+const isConfigModalOpen = ref(false)
 const isCollapsed = ref(false)
 const textareaRef = ref<HTMLTextAreaElement | null>(null)
 
-const isInputDisabled = computed(
-  () => props.chatStatus !== 'idle'
-)
-
-const isValidInput = computed(
-  () => query.value.trim().length > 0
-)
+const isInputDisabled = computed(() => props.chatStatus !== 'idle')
+const isValidInput = computed(() => query.value.trim().length > 0)
 
 const submitButtonText = computed(() => {
   if (!query.value.trim()) {
@@ -139,22 +127,16 @@ const submitButtonText = computed(() => {
   return 'Submit Query'
 })
 
-const formatProcessType = (pt: string): string => {
-  return pt
-    .split('_')
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ')
-}
-
 const onSubmit = () => {
-  if (
-    query.value.trim() &&
-    !isInputDisabled.value
-  ) {
+  if (query.value.trim() && !isInputDisabled.value) {
     emit('submit', {
       query: query.value,
-      processOverride: selectedProcessType.value || undefined,
-      modelSelection: selectedModelType.value || undefined,
+      executionConfig: {
+        processOverride: selectedProcessType.value || undefined,
+        modelSelection: selectedModelType.value || undefined,
+        allowGeneralKnowledgeFallback: allowGeneralKnowledgeFallback.value,
+        allowWebSearch: allowWebSearch.value,
+      },
     })
     query.value = ''
   }
@@ -166,26 +148,24 @@ const onStop = () => {
 
 const focus = () => {
   isCollapsed.value = false
-  textareaRef.value?.focus()  
+  textareaRef.value?.focus()
 }
 
 const clear = () => {
   query.value = ''
 }
 
-const resetProcessType = () => {
+const resetExecutionConfig = () => {
   selectedProcessType.value = ''
-}
-
-const resetModelType = () => {
   selectedModelType.value = ''
+  allowGeneralKnowledgeFallback.value = true
+  allowWebSearch.value = false
 }
 
 defineExpose({
   focus,
   clear,
-  resetProcessType,
-  resetModelType,
+  resetExecutionConfig,
 })
 </script>
 
@@ -236,11 +216,16 @@ defineExpose({
 .submit-row {
   display: flex;
   gap: 0.75rem;
-  align-items: stretch;
+  align-items: flex-start;
 }
 
-.model-select,
-.process-select {
+.submit-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.config-button {
   padding: 0.75rem 1rem;
   font-size: 0.9rem;
   border: 1px solid var(--color-border);
@@ -249,18 +234,13 @@ defineExpose({
   color: var(--color-text-primary);
   cursor: pointer;
   transition: border-color var(--transition-base);
-  min-width: 160px;
 }
 
-.model-select:focus,
-.process-select:focus {
-  outline: none;
+.config-button:hover:not(:disabled) {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
 }
 
-.model-select:disabled,
-.process-select:disabled {
+.config-button:disabled {
   background-color: var(--color-surface-hover);
   color: var(--color-text-tertiary);
   cursor: not-allowed;
@@ -290,8 +270,7 @@ textarea:disabled {
   cursor: not-allowed;
 }
 
-button[type="submit"] {
-  flex: 1;
+button[type='submit'] {
   padding: 0.75rem 1.5rem;
   font-size: 1rem;
   background-color: var(--color-primary);
@@ -303,11 +282,11 @@ button[type="submit"] {
   font-weight: 500;
 }
 
-button[type="submit"]:hover:not(:disabled) {
+button[type='submit']:hover:not(:disabled) {
   background-color: var(--color-primary-dark);
 }
 
-button[type="submit"]:disabled {
+button[type='submit']:disabled {
   background-color: var(--color-border);
   cursor: not-allowed;
 }
@@ -326,5 +305,17 @@ button[type="submit"]:disabled {
 
 .stop-button:hover {
   background-color: var(--color-error-border, #b91c1c);
+}
+
+@media (max-width: 640px) {
+  .submit-row {
+    flex-wrap: wrap;
+  }
+
+  .submit-actions {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-end;
+  }
 }
 </style>

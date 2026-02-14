@@ -11,6 +11,14 @@ export interface GraphInput {
   custom_start_node?: string
   process_override?: string
   model_selection?: string
+  execution_config?: {
+    process_override?: string
+    model_selection?: string
+    allow_general_knowledge_fallback?: boolean
+    allow_web_search?: boolean
+    temperature?: number
+    reasoning_level?: string
+  }
 }
 
 

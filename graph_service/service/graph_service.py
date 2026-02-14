@@ -16,6 +16,7 @@ from graph import build_graph
 from model.raw_chat_message import RawChatMessage
 from model.graph_input import GraphInput
 from model.graph_state import GraphState
+from model.execution_config import ExecutionConfig
 from model.process_selection import ProcessSelectionOutput
 from utils.stop_signal_waiter import StopSignalWaiter
 from exception.invocation_stopped_exception import (
@@ -235,13 +236,28 @@ async def stream_graph(
             )
             raise
 
+        # Resolve execution config (prefer explicit config object,
+        # fall back to legacy top-level fields for compatibility)
+
+        execution_config = (
+            input_data.execution_config.model_copy(deep=True)
+            if input_data.execution_config
+            else ExecutionConfig()
+        )
+
+        if not execution_config.process_override and input_data.process_override:
+            execution_config.process_override = input_data.process_override
+
+        if not execution_config.model_selection and input_data.model_selection:
+            execution_config.model_selection = input_data.model_selection
+
         # Prepare graph messages to be included in the graph invocation
 
         graph_state_messages = await _prepare_graph_messages(
             all_messages=input_data.messages,
             user_query=input_data.user_query,
             invocation_id=invocation_id,
-            model_selection=input_data.model_selection,
+            model_selection=execution_config.model_selection,
         )
             
         # Build initial GraphState
@@ -250,12 +266,13 @@ async def stream_graph(
             user_query=input_data.user_query,
             profile_id=input_data.profile_id,
             messages=graph_state_messages,
-            model_selection=input_data.model_selection,
+            model_selection=execution_config.model_selection,
+            execution_config=execution_config,
         )
 
-        if input_data.process_override:
+        if execution_config.process_override:
             graph_state.process_selection = ProcessSelectionOutput(
-                process_type=input_data.process_override,
+                process_type=execution_config.process_override,
                 reasoning="User-selected process override",
             )
 
