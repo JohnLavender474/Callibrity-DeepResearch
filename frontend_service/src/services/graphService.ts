@@ -10,7 +10,6 @@ export interface GraphInput {
   messages?: SimpleMessage[]
   custom_start_node?: string
   process_override?: string
-  model_selection?: string
   execution_config?: {
     process_override?: string
     model_selection?: string

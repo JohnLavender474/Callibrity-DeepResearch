@@ -1,7 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
 
-from model.model_selection import ModelType
 from model.process_selection import ProcessType
 from model.raw_chat_message import RawChatMessage
 from model.execution_config import ExecutionConfig
